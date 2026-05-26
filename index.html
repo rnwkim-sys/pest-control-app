@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pest Control v3.0</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap');
+:root{
+  --bg:#0f1410;--bg2:#161d17;--bg3:#1c2620;
+  --border:rgba(74,182,96,0.15);--border2:rgba(74,182,96,0.3);
+  --green:#4ab660;--green-dim:rgba(74,182,96,0.1);
+  --red:#e05252;--red-dim:rgba(224,82,82,0.1);
+  --orange:#e08c3a;--orange-dim:rgba(224,140,58,0.1);
+  --blue:#4a9de0;--blue-dim:rgba(74,157,224,0.1);
+  --purple:#9b6de0;--purple-dim:rgba(155,109,224,0.1);
+  --text:#e8f0e9;--text2:#8fa894;--text3:#5a7060;
+  --font:'Golos Text',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:36px;width:400px;max-width:95vw}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.login-icon{width:42px;height:42px;background:var(--green-dim);border:1px solid var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.ltoggle{display:flex;gap:6px;margin-bottom:18px}
+.ltab{flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text2);font-family:var(--font);text-align:center;transition:all 0.15s}
+.ltab.active{background:var(--green);color:#0f1410;border-color:var(--green)}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase}
+.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color 0.2s}
+.field input:focus,.field select:focus{border-color:var(--green)}
+.field select option{background:var(--bg2)}
+.btn-login{width:100%;background:var(--green);color:#0f1410;border:none;border-radius:10px;padding:11px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}
+.btn-login:hover{opacity:0.9}
+.msg-err{color:var(--red);font-size:12px;margin-top:8px;padding:8px;background:var(--red-dim);border-radius:6px;display:none}
+.msg-ok{color:var(--green);font-size:12px;margin-top:8px;padding:8px;background:var(--green-dim);border-radius:6px;display:none}
+#app{display:none;min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:235px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform 0.3s}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sb-icon{width:34px;height:34px;background:var(--green-dim);border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.sb-t{font-size:13px;font-weight:700}.sb-s{font-size:10px;color:var(--text3)}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:1px;text-transform:uppercase;padding:10px 8px 5px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:all 0.15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--green-dim);color:var(--green);border:1px solid var(--border2)}
+.nav-badge{margin-left:auto;background:var(--green);color:#0f1410;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sb-user{padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.u-av{width:32px;height:32px;background:var(--green-dim);border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--green);flex-shrink:0}
+.u-name{font-size:12px;font-weight:600}.u-role{font-size:10px;color:var(--text3)}
+.btn-out{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:17px;padding:3px}
+.btn-out:hover{color:var(--red)}
+.main{margin-left:235px;min-height:100vh;padding:22px}
+.page{display:none}.page.active{display:block}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.page-title{font-size:20px;font-weight:700}.page-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.dir-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.dir-tab{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text2);font-family:var(--font);transition:all 0.15s;display:flex;align-items:center;gap:7px}
+.dir-tab:hover{border-color:var(--border2);color:var(--text)}
+.dir-tab.derat.active{background:var(--blue-dim);color:var(--blue);border-color:rgba(74,157,224,0.4)}
+.dir-tab.disins.active{background:var(--orange-dim);color:var(--orange);border-color:rgba(224,140,58,0.4)}
+.dir-tab.birds.active{background:var(--purple-dim);color:var(--purple);border-color:rgba(155,109,224,0.4)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px}
+.kpi-icon{font-size:18px;margin-bottom:8px}.kpi-label{font-size:11px;color:var(--text2);margin-bottom:3px}
+.kpi-value{font-size:26px;font-weight:700}.kpi-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.green{color:var(--green)}.red{color:var(--red)}.orange{color:var(--orange)}.blue{color:var(--blue)}.purple{color:var(--purple)}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:12px}
+.period-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin-bottom:16px}
+.period-bar label{font-size:11px;color:var(--text2)}
+.period-bar select,.period-bar input[type=date]{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none}
+.ap-label{margin-left:auto;font-size:10px;color:var(--green);background:var(--green-dim);padding:3px 9px;border-radius:20px;border:1px solid var(--border2)}
+.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
+.form-card-title{font-size:14px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:10px}
+.form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500;text-transform:uppercase}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color 0.15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green)}
+.form-group select option{background:var(--bg2)}
+.form-group textarea{resize:vertical;min-height:70px}
+.rs{color:var(--red)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all 0.15s;border:none}
+.btn-p{background:var(--green);color:#0f1410}.btn-p:hover{opacity:0.9}
+.btn-s{background:var(--bg3);color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--border2)}
+.btn-d{background:none;color:var(--red);border:1px solid rgba(224,82,82,0.3)}.btn-d:hover{background:var(--red-dim)}
+.btn-b{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(74,157,224,0.3)}
+.btn-o{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(224,140,58,0.3)}
+.btn-pu{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(155,109,224,0.3)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.alert{padding:9px 12px;border-radius:7px;font-size:12px;margin-bottom:12px;display:none;align-items:center;gap:7px}
+.alert-ok{background:var(--green-dim);border:1px solid var(--border2);color:var(--green)}
+.alert-err{background:var(--red-dim);border:1px solid rgba(224,82,82,0.3);color:var(--red)}
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.table-toolbar{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.table-toolbar input,.table-toolbar select{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:var(--font);font-size:12px;outline:none}
+.tc{margin-left:auto;font-size:11px;color:var(--text3)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;padding:9px 12px;font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.bg{background:rgba(74,182,96,0.12);color:var(--green);border:1px solid rgba(74,182,96,0.25)}
+.br{background:rgba(224,82,82,0.12);color:var(--red);border:1px solid rgba(224,82,82,0.25)}
+.bo{background:rgba(224,140,58,0.12);color:var(--orange);border:1px solid rgba(224,140,58,0.25)}
+.bb{background:rgba(74,157,224,0.12);color:var(--blue);border:1px solid rgba(74,157,224,0.25)}
+.bp{background:rgba(155,109,224,0.12);color:var(--purple);border:1px solid rgba(155,109,224,0.25)}
+.sig-pad{border:1px solid var(--border);border-radius:8px;background:#1a2a1a;cursor:crosshair;display:block;width:100%;height:100px}
+.loading{display:flex;align-items:center;justify-content:center;padding:36px;color:var(--text3);font-size:12px;gap:8px}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:36px;color:var(--text3);font-size:12px}
+.eff-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px}
+.eff-num{font-size:44px;font-weight:700;color:var(--green);letter-spacing:-2px;line-height:1;margin:8px 0 4px;text-align:center}
+.eff-bars{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.eff-row{display:flex;align-items:center;gap:7px}
+.eff-lbl{font-size:10px;color:var(--text2);width:52px;text-align:right;flex-shrink:0}
+.eff-track{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.eff-fill{height:100%;border-radius:3px;transition:width 0.8s ease}
+.eff-val{font-size:10px;width:32px;flex-shrink:0}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.cmp-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px}
+.cmp-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px}
+.cmp-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.cmp-row:last-child{border-bottom:none}
+.tu{color:var(--red)}.td{color:var(--green)}.te{color:var(--text3)}
+.mobile-btn{display:none;position:fixed;top:10px;left:10px;z-index:150;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:7px 9px;cursor:pointer;font-size:17px;color:var(--text)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99}
+.overlay.open{display:block}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:14px}.chart-grid,.cmp-grid{grid-template-columns:1fr}.mobile-btn{display:flex}}
+@media print{.sidebar,.topbar .btn,.period-bar,.dir-tabs,.table-toolbar,.mobile-btn{display:none!important}.main{margin-left:0!important;padding:8px!important}body{background:#fff!important;color:#000!important;font-size:10pt}.kpi-card,.chart-card,.form-card,.table-card{border:1px solid #ccc!important;background:#fff!important;break-inside:avoid}@page{size:A4;margin:12mm}}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div id="login-screen">
+<div class="login-box">
+  <div class="login-logo">
+    <div class="login-icon">🐛</div>
+    <div><div style="font-size:15px;font-weight:700">Pest Control</div><div style="font-size:10px;color:var(--text3)">MONITORING v3.0</div></div>
+  </div>
+  <div class="ltoggle">
+    <div class="ltab active" id="lt-l" onclick="showLTab('l')">Вход</div>
+    <div class="ltab" id="lt-r" onclick="showLTab('r')">Регистрация</div>
+  </div>
+  <div id="lf-l">
+    <div class="field"><label>EMAIL</label><input type="email" id="l-email" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="field"><label>ПАРОЛЬ</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()">Войти</button>
+    <div class="msg-err" id="l-err"></div>
+  </div>
+  <div id="lf-r" style="display:none">
+    <div class="field"><label>ИМЯ <span class="rs">*</span></label><input type="text" id="r-name" placeholder="Иванов Александр"></div>
+    <div class="field"><label>EMAIL <span class="rs">*</span></label><input type="email" id="r-email" placeholder="you@company.com"></div>
+    <div class="field"><label>КОМПАНИЯ <span class="rs">*</span></label><input type="text" id="r-company" placeholder="ТОО Название"></div>
+    <div class="field"><label>ГОРОД</label><input type="text" id="r-city" placeholder="Алматы"></div>
+    <div class="field"><label>ПАРОЛЬ <span class="rs">*</span></label><input type="password" id="r-pass" placeholder="Минимум 6 символов"></div>
+    <div class="field"><label>ПОДТВЕРДИТЕ ПАРОЛЬ <span class="rs">*</span></label><input type="password" id="r-pass2" placeholder="Повторите пароль"></div>
+    <button class="btn-login" onclick="doRegister()">Зарегистрироваться</button>
+    <div class="msg-err" id="r-err"></div>
+    <div class="msg-ok" id="r-ok"></div>
+  </div>
+</div>
+</div>
+
+<button class="mobile-btn" onclick="toggleSb()">☰</button>
+<div class="overlay" id="overlay" onclick="toggleSb()"></div>
+
+<!-- APP -->
+<div id="app">
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon">🐛</div>
+    <div><div class="sb-t">Pest Control</div><div class="sb-s" id="sb-co">—</div></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-sec">Точки контроля</div>
+    <button class="nav-item active" onclick="showPage('points',this)">📍 Точки мониторинга</button>
+    <button class="nav-item" onclick="showPage('qrcodes',this)">📱 QR-Коды</button>
+
+    <div class="nav-sec">Система</div>
+    <button class="nav-item" onclick="showPage('settings',this)">⚙️ Настройки</button>
+  </nav>
+  <div class="sb-user">
+    <div class="u-av" id="u-av">?</div>
+    <div><div class="u-name" id="u-name">—</div><div class="u-role" id="u-role">—</div></div>
+    <button class="btn-out" onclick="doLogout()" title="Выйти">↩</button>
+  </div>
+</aside>
+<main class="main">
+
+<!-- DASHBOARD -->
+<div id="page-companies" class="page">
+  <div class="topbar"><div><div class="page-title">🏢 Компании и Филиалы</div></div><button class="btn btn-p btn-sm" onclick="addCo()">+ Добавить</button></div>
+  <div id="co-list"></div>
+</div>
+
+
+<!-- POINTS PAGE -->
+<div id="page-points" class="page active">
+  <div class="topbar">
+    <div><div class="page-title">📍 Точки мониторинга</div><div class="page-sub">Создание и управление точками контроля</div></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:rgba(74,157,224,0.15);color:var(--blue);border:1px solid rgba(74,157,224,0.3)" onclick="startSessionPanel()">📋 Новый обход</button>
+      <button class="btn btn-p btn-sm" onclick="printPoints()">🖨 Печать списка</button>
+    </div>
+  </div>
+
+  <!-- SESSION PANEL -->
+  <div id="session-panel" style="display:none;border:2px solid var(--blue);border-radius:12px;background:var(--bg2);padding:16px 18px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:14px;font-weight:700;color:var(--blue)">📋 Обход — параметры акта</div>
+      <button onclick="document.getElementById('session-panel').style.display='none'" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text2)">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:14px">
+      <div>
+        <div style="font-size:10px;color:var(--text2);font-weight:700;margin-bottom:4px;text-transform:uppercase">КОМПАНИЯ PEST CONTROL <span style="color:var(--red)">*</span></div>
+        <input type="text" id="sess-pest-co" placeholder="ТОО «ПестКонтроль»" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 9px;color:var(--text);font-family:var(--font);font-size:12px;outline:none">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text2);font-weight:700;margin-bottom:4px;text-transform:uppercase">ФИО ТЕХНИКА <span style="color:var(--red)">*</span></div>
+        <input type="text" id="sess-tech-name" placeholder="Иванов И.И." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 9px;color:var(--text);font-family:var(--font);font-size:12px;outline:none">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text2);font-weight:700;margin-bottom:4px;text-transform:uppercase">ДАТА ОСМОТРА <span style="color:var(--red)">*</span></div>
+        <input type="date" id="sess-date" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 9px;color:var(--text);font-family:var(--font);font-size:12px;outline:none">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text2);font-weight:700;margin-bottom:4px;text-transform:uppercase">ОБЪЕКТ (фильтр)</div>
+        <input type="text" id="sess-obj-filter" placeholder="Все объекты" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 9px;color:var(--text);font-family:var(--font);font-size:12px;outline:none">
+      </div>
+    </div>
+    <div id="sess-err" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-p" onclick="finishSessionWithSigns()">✍️ Завершить обход и подписать акт</button>
+      <button class="btn btn-sm" style="background:var(--bg3);border:1px solid var(--border);color:var(--text)" onclick="finishSessionSilent()">💾 Завершить без подписи</button>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text3)">
+      ⚖️ Все сохранённые сегодня осмотры войдут в акт. Подпись ставится один раз — в конце обхода.
+    </div>
+  </div>
+
+  <!-- Bulk create panel -->
+  <div class="form-card" style="border-color:rgba(74,182,96,0.4)">
+    <div class="form-card-title" style="color:var(--green)">⚡ Массовое создание точек мониторинга</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Укажите тип, диапазон номеров и общие данные — система создаст все точки автоматически</div>
+    <div class="form-row">
+      <div class="form-group"><label>ТИП ТОЧКИ <span class="rs">*</span></label>
+        <select id="pt-type">
+          <option value="НР">📦 НР — Наружный контейнер</option>
+          <option value="ВН">🟨 ВН — Внутренняя живоловка</option>
+          <option value="АВ">🪤 АВ — Амбарная ловушка</option>
+          <option value="ИЛ">💡 ИЛ — Инсектицидная лампа</option>
+          <option value="ДЗ">🦟 ДЗ — Дезинсекция (точка)</option>
+          <option value="ПТ">🦅 ПТ — Защита от птиц</option>
+        </select>
+      </div>
+      <div class="form-group"><label>С НОМЕРА <span class="rs">*</span></label><input type="number" id="pt-from" min="1" value="1" placeholder="1"></div>
+      <div class="form-group"><label>ПО НОМЕР <span class="rs">*</span></label><input type="number" id="pt-to" min="1" value="10" placeholder="10"></div>
+      <div class="form-group"><label>ОБЪЕКТ/КОМПАНИЯ <span class="rs">*</span></label><input type="text" id="pt-co" placeholder="ТОО Название"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>МЕСТОПОЛОЖЕНИЕ (шаблон)</label><input type="text" id="pt-loc" placeholder="Периметр / Склад A" value="Периметр"></div>
+      <div class="form-group"><label>ГОРОД</label><input type="text" id="pt-city" placeholder="Алматы"></div>
+      <div class="form-group"><label>ОТВЕТСТВЕННЫЙ</label><input type="text" id="pt-resp" placeholder="Иванов А.А."></div>
+      <div class="form-group" style="display:flex;align-items:flex-end">
+        <button class="btn btn-p" style="width:100%" onclick="createPoints()">⚡ Создать точки</button>
+      </div>
+    </div>
+    <div id="pt-result" style="display:none;margin-top:8px"></div>
+  </div>
+
+  <!-- Single point add -->
+  <div class="form-card">
+    <div class="form-card-title">➕ Добавить одну точку вручную</div>
+    <div class="form-row">
+      <div class="form-group"><label>ТИП</label>
+        <select id="sp-type">
+          <option value="НР">НР</option><option value="ВН">ВН</option>
+          <option value="АВ">АВ</option><option value="ИЛ">ИЛ</option>
+          <option value="ДЗ">ДЗ</option><option value="ПТ">ПТ</option>
+        </select>
+      </div>
+      <div class="form-group"><label>НОМЕР <span class="rs">*</span></label><input type="text" id="sp-num" placeholder="01"></div>
+      <div class="form-group"><label>ОБЪЕКТ <span class="rs">*</span></label><input type="text" id="sp-co" placeholder="ТОО Название"></div>
+      <div class="form-group"><label>МЕСТО</label><input type="text" id="sp-loc" placeholder="Склад A / Вход"></div>
+      <div class="form-group"><label>ГОРОД</label><input type="text" id="sp-city" placeholder="Алматы"></div>
+      <div class="form-group" style="display:flex;align-items:flex-end">
+        <button class="btn btn-p" style="width:100%" onclick="addSinglePoint()">+ Добавить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Points filter -->
+  <div class="table-card">
+    <div class="table-toolbar">
+      <input type="text" id="pt-search" placeholder="🔍 Поиск..." oninput="renderPoints()" style="width:160px">
+      <select id="pt-filter-type" onchange="renderPoints()">
+        <option value="">Все типы</option>
+        <option value="НР">НР</option><option value="ВН">ВН</option>
+        <option value="АВ">АВ</option><option value="ИЛ">ИЛ</option>
+        <option value="ДЗ">ДЗ</option><option value="ПТ">ПТ</option>
+      </select>
+      <input type="text" id="pt-filter-co" placeholder="Объект..." oninput="renderPoints()">
+      <div class="tc" id="pt-count">0 точек</div>
+      <button class="btn btn-d btn-sm" onclick="clearAllPoints()">🗑 Очистить все</button>
+    </div>
+    <div class="tw" id="points-table"></div>
+  </div>
+</div>
+
+<!-- QR CODES PAGE -->
+<div id="page-qrcodes" class="page">
+  <div class="topbar">
+    <div><div class="page-title">📱 QR-Коды</div><div class="page-sub">Распечатайте и наклейте на каждую ловушку</div></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-s btn-sm" onclick="renderQRPage()">↻ Обновить</button>
+      <button class="btn btn-p btn-sm" onclick="printAllQR()">🖨 Распечатать все QR</button>
+    </div>
+  </div>
+
+  <div class="period-bar">
+    <label>Фильтр:</label>
+    <select id="qr-filter-type" onchange="renderQRPage()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;outline:none;font-family:var(--font)">
+      <option value="">Все типы</option>
+      <option value="НР">📦 НР</option><option value="ВН">🟨 ВН</option>
+      <option value="АВ">🪤 АВ</option><option value="ИЛ">💡 ИЛ</option>
+      <option value="ДЗ">🦟 ДЗ</option><option value="ПТ">🦅 ПТ</option>
+    </select>
+    <input type="text" id="qr-filter-co" placeholder="Объект..." oninput="renderQRPage()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;outline:none;font-family:var(--font)">
+    <div class="ap-label" id="qr-total-label">0 QR-кодов</div>
+  </div>
+
+  <div id="qr-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="page-settings" class="page">
+  <div class="topbar"><div><div class="page-title">⚙️ Настройки</div></div></div>
+  <div class="form-card">
+    <div class="form-card-title">👤 Профиль</div>
+    <div class="form-row">
+      <div class="form-group"><label>ИМЯ</label><input type="text" id="set-name"></div>
+      <div class="form-group"><label>EMAIL</label><input type="email" id="set-email" readonly style="opacity:0.5"></div>
+      <div class="form-group"><label>КОМПАНИЯ</label><input type="text" id="set-co"></div>
+      <div class="form-group"><label>ГОРОД</label><input type="text" id="set-city"></div>
+    </div>
+    <button class="btn btn-p" onclick="saveProfile()">✓ Сохранить профиль</button>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title">🏢 Реквизиты компании Pest Control (для актов)</div>
+    <div class="form-row">
+      <div class="form-group"><label>ПОЛНОЕ НАИМЕНОВАНИЕ</label><input type="text" id="req-name" placeholder="ТОО «ПестКонтроль»"></div>
+      <div class="form-group"><label>БИН / ИНН</label><input type="text" id="req-bin" placeholder="123456789012"></div>
+      <div class="form-group"><label>ЛИЦЕНЗИЯ</label><input type="text" id="req-lic" placeholder="№ 0001234 от 01.01.2024"></div>
+      <div class="form-group"><label>АДРЕС</label><input type="text" id="req-addr" placeholder="г. Алматы, ул. Примерная, 1"></div>
+      <div class="form-group"><label>ТЕЛЕФОН</label><input type="text" id="req-phone" placeholder="+7 700 000-00-00"></div>
+      <div class="form-group"><label>EMAIL КОМПАНИИ</label><input type="email" id="req-email" placeholder="info@pestcontrol.kz"></div>
+      <div class="form-group"><label>ДИРЕКТОР / ИП</label><input type="text" id="req-director" placeholder="Иванов И.И."></div>
+      <div class="form-group"><label>ДОЛЖНОСТЬ ИСПОЛНИТЕЛЯ</label><input type="text" id="req-tech-title" placeholder="Технический специалист"></div>
+    </div>
+    <div style="margin-top:12px">
+      <label style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.8px">ПОДПИСЬ ИСПОЛНИТЕЛЯ (Pest Control) — используется во всех актах</label>
+      <div style="margin-top:6px;position:relative">
+        <canvas class="sig-pad" id="sig-tech-main" width="600" height="90"></canvas>
+        <button onclick="clearSig('sig-tech-main')" style="position:absolute;top:6px;right:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text2);cursor:pointer">✕ Очистить</button>
+      </div>
+    </div>
+    <button class="btn btn-p" style="margin-top:12px" onclick="saveRequisites()">✓ Сохранить реквизиты</button>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title">🔒 Смена пароля</div>
+    <div class="form-row">
+      <div class="form-group"><label>НОВЫЙ ПАРОЛЬ</label><input type="password" id="np" placeholder="Минимум 6 символов"></div>
+      <div class="form-group"><label>ПОДТВЕРЖДЕНИЕ</label><input type="password" id="cp" placeholder="Повторите"></div>
+    </div>
+    <button class="btn btn-p" onclick="changePass()">✓ Изменить</button>
+  </div>
+</div>
+<!-- ═══ MODAL: История мониторинга по точке ═══ -->
+<div id="modal-history" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.65);align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:min(700px,96vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div id="mh-title" style="font-size:15px;font-weight:700;color:var(--text)"></div>
+        <div id="mh-sub" style="font-size:11px;color:var(--text3);margin-top:2px"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="mh-date-sel" onchange="renderHistoryForDate()" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font)"></select>
+        <button class="btn btn-p btn-sm" onclick="printCurrentAct()">🖨 Печать акта</button>
+        <button class="btn btn-sm" style="background:var(--green-dim);color:var(--green);border:1px solid var(--border2)" onclick="emailCurrentAct()">📧 Email</button>
+        <button onclick="document.getElementById('modal-history').style.display='none'" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;color:var(--text)">✕</button>
+      </div>
+    </div>
+    <div id="mh-body" style="padding:20px;overflow-y:auto;flex:1"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Подписи для акта ═══ -->
+<div id="modal-signs" style="display:none;position:fixed;inset:0;z-index:950;background:rgba(0,0,0,0.65);align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:min(600px,96vw);max-height:88vh;overflow-y:auto;padding:24px">
+    <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px">✍️ Подписи сторон</div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;letter-spacing:0.7px">ИСПОЛНИТЕЛЬ (Pest Control) — подпись</div>
+      <div style="position:relative"><canvas class="sig-pad" id="sig-act-tech" width="550" height="90"></canvas><button onclick="clearSig('sig-act-tech')" style="position:absolute;top:6px;right:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text2);cursor:pointer">✕</button></div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label style="font-size:10px;color:var(--text3)">ФИО исполнителя</label><input type="text" id="sign-tech-name" placeholder="Иванов И.И." style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none"></div>
+        <div><label style="font-size:10px;color:var(--text3)">Дата</label><input type="date" id="sign-tech-date" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none"></div>
+      </div>
+    </div>
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;letter-spacing:0.7px">ОТВЕТСТВЕННОЕ ЛИЦО ОБЪЕКТА — подпись</div>
+      <div style="position:relative"><canvas class="sig-pad" id="sig-act-client" width="550" height="90"></canvas><button onclick="clearSig('sig-act-client')" style="position:absolute;top:6px;right:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text2);cursor:pointer">✕</button></div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label style="font-size:10px;color:var(--text3)">ФИО ответственного</label><input type="text" id="sign-client-name" placeholder="Петров П.П." style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none"></div>
+        <div><label style="font-size:10px;color:var(--text3)">Должность</label><input type="text" id="sign-client-title" placeholder="Директор / Зав. складом" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-s" onclick="document.getElementById('modal-signs').style.display='none'">Отмена</button>
+      <button class="btn btn-p" onclick="confirmSignsAndPrint()">✓ Подтвердить и распечатать</button>
+    </div>
+  </div>
+</div>
+</main>
+</div>
+
+<script>
+const SURL='https://iuyhldaffxqsxuhqizsl.supabase.co';
+const SKEY='sb_publishable_3Fup75n8Y_938rXg44GnMw_EJnrlb-a';
+const sb=supabase.createClient(SURL,SKEY);
+var CU=null,CP=null,charts={};
+var today=new Date().toISOString().split('T')[0];
+document.querySelectorAll('input[type=date]').forEach(function(e){if(!e.value && e.id !== 'jj-f' && e.id !== 'jj-t')e.value=today;});
+
+// AUTH
+function showLTab(t){
+  document.getElementById('lf-l').style.display=t==='l'?'block':'none';
+  document.getElementById('lf-r').style.display=t==='r'?'block':'none';
+  document.getElementById('lt-l').className='ltab'+(t==='l'?' active':'');
+  document.getElementById('lt-r').className='ltab'+(t==='r'?' active':'');
+}
+async function doLogin(){
+  var e=document.getElementById('l-email').value.trim(),p=document.getElementById('l-pass').value,el=document.getElementById('l-err');
+  el.style.display='none';
+  if(!e||!p){el.textContent='Введите email и пароль';el.style.display='block';return;}
+  try{var r=await sb.auth.signInWithPassword({email:e,password:p});if(r.error)throw r.error;CU=r.data.user;await loadCP();showApp();}
+  catch(err){el.textContent='Неверный email или пароль';el.style.display='block';}
+}
+async function doRegister(){
+  var n=document.getElementById('r-name').value.trim(),e=document.getElementById('r-email').value.trim(),
+      co=document.getElementById('r-company').value.trim(),ci=document.getElementById('r-city').value.trim(),
+      p=document.getElementById('r-pass').value,p2=document.getElementById('r-pass2').value,
+      err=document.getElementById('r-err'),ok=document.getElementById('r-ok');
+  err.style.display='none';ok.style.display='none';
+  if(!n||!e||!co||!p){err.textContent='Заполните все обязательные поля';err.style.display='block';return;}
+  if(p.length<6){err.textContent='Пароль минимум 6 символов';err.style.display='block';return;}
+  if(p!==p2){err.textContent='Пароли не совпадают';err.style.display='block';return;}
+  try{
+    var r=await sb.auth.signUp({email:e,password:p,options:{data:{name:n,company:co,city:ci,role:'manager'}}});
+    if(r.error)throw r.error;
+    var li=await sb.auth.signInWithPassword({email:e,password:p});
+    if(!li.error&&li.data.user){CU=li.data.user;await loadCP();showApp();return;}
+    ok.textContent='✅ Зарегистрирован! Войдите через вкладку Вход.';ok.style.display='block';
+  }catch(err2){
+    var m=err2.message||'Ошибка';
+    if(m.includes('already'))m='Email уже зарегистрирован';
+    if(m.includes('rate'))m='Подождите минуту и попробуйте снова';
+    err.textContent=m;err.style.display='block';
+  }
+}
+async function doLogout(){await sb.auth.signOut();CU=null;CP=null;document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='flex';}
+async function loadCP(){
+  if(!CU)return;var m=CU.user_metadata||{};
+  CP={name:m.name||CU.email.split('@')[0],email:CU.email,company:m.company||'—',city:m.city||'—',role:m.role||'manager'};
+  if(CU.email==='rnw.kim@gmail.com')CP.role='admin';
+}
+function showApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('u-av').textContent=(CP.name||'?')[0].toUpperCase();
+  document.getElementById('u-name').textContent=CP.name;
+  document.getElementById('u-role').textContent=CP.role;
+  document.getElementById('sb-co').textContent=CP.company;
+  document.getElementById('set-name').value=CP.name;
+  document.getElementById('set-email').value=CP.email;
+  document.getElementById('set-co').value=CP.company;
+  document.getElementById('set-city').value=CP.city;
+  
+  initSigs();loadRequisites();updateBadge();setTimeout(checkQRScan,1000);
+}
+sb.auth.getSession().then(function(r){if(r.data&&r.data.session){CU=r.data.session.user;loadCP().then(function(){showApp();});}});
+
+// DATA
+async function getActs(f){
+  f=f||{};var q=sb.from('acts').select('*').order('created_at',{ascending:false});
+  if(CP&&CP.role!=='admin')q=q.eq('user_email',CU.email);
+  if(f.direction)q=q.eq('direction',f.direction);
+  if(f.from)q=q.gte('date',f.from);
+  if(f.to)q=q.lte('date',f.to);
+  var r=await q;
+  if(r.error){console.error('getActs error:',r.error);return[];}
+  return r.data||[];
+}
+function getPD(period){
+  var now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  var fmt=function(d){return d.toISOString().split('T')[0];};
+  if(period==='today')return[today,today];
+  if(period==='week'){var d=new Date(now);d.setDate(d.getDate()-6);return[fmt(d),today];}
+  if(period==='month')return[fmt(new Date(y,m,1)),fmt(new Date(y,m+1,0))];
+  if(period==='prevmonth')return[fmt(new Date(y,m-1,1)),fmt(new Date(y,m,0))];
+  if(period==='quarter'){var qm=Math.floor(m/3)*3;return[fmt(new Date(y,qm,1)),fmt(new Date(y,qm+3,0))];}
+  if(period==='year')return[y+'-01-01',y+'-12-31'];
+  var f=document.getElementById('d-from'),t=document.getElementById('d-to');
+  return[f&&f.value||y+'-01-01',t&&t.value||today];
+}
+function getLM(){var r=[],now=new Date();for(var i=5;i>=0;i--){var d=new Date(now.getFullYear(),now.getMonth()-i,1);r.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));}return r;}
+function dc(k){if(charts[k]){try{charts[k].destroy();}catch(e){}delete charts[k];}}
+function kc(icon,label,val,color){return'<div class="kpi-card"><div class="kpi-icon">'+icon+'</div><div class="kpi-label">'+label+'</div><div class="kpi-value '+color+'">'+val+'</div></div>';}
+function eb(lbl,pct,color){return'<div class="eff-row"><div class="eff-lbl">'+lbl+'</div><div class="eff-track"><div class="eff-fill" style="width:'+Math.round(pct)+'%;background:'+color+'"></div></div><div class="eff-val" style="color:'+color+'">'+Math.round(pct)+'%</div></div>';}
+function co(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8fa894',font:{size:10},boxWidth:8}}},scales:{x:{ticks:{color:'#5a7060',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},y:{beginAtZero:true,ticks:{color:'#5a7060',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}}}};}
+
+function calcStats(acts){
+  var rod=0,ins=0;
+  acts.forEach(function(a){try{var d=JSON.parse(a.act_data||'{}');
+    if(d.vn)d.vn.forEach(function(r){rod+=Number(r.rod||0);});
+    if(d.av)d.av.forEach(function(r){rod+=Number(r.rod||0);});
+    if(d.il)d.il.forEach(function(r){ins+=Number(r.ins||0);});
+    if(d.dil)d.dil.forEach(function(r){ins+=Number(r.ins||0);});
+  }catch(e){}});
+  return{total:acts.length,derat:acts.filter(function(a){return a.direction==='deratization';}).length,
+    disins:acts.filter(function(a){return a.direction==='disinsection';}).length,
+    birds:acts.filter(function(a){return a.direction==='birds';}).length,rodents:rod,insects:ins};
+}
+
+function renderActsTable(acts,id){
+  var el=document.getElementById(id);if(!el)return;
+  if(!acts.length){el.innerHTML='<div class="empty">📭 Нет актов</div>';return;}
+  var dn={deratization:'🐀 Дератизация',disinsection:'🦟 Дезинсекция',birds:'🦅 Птицы'};
+  var db={deratization:'bb',disinsection:'bo',birds:'bp'};
+  el.innerHTML='<table><thead><tr><th>Дата</th><th>Направление</th><th>Объект</th><th>Адрес/Филиал</th><th>Техник</th><th>Подпись</th><th></th></tr></thead><tbody>'+
+    acts.map(function(a){
+      return'<tr><td style="font-size:11px;color:var(--text2)">'+a.date+'</td>'+
+        '<td><span class="badge '+(db[a.direction]||'bg')+'">'+(dn[a.direction]||a.direction)+'</span></td>'+
+        '<td style="font-weight:600;font-size:12px">'+a.client_company+'</td>'+
+        '<td style="font-size:11px;color:var(--text2)">'+a.branch+'</td>'+
+        '<td style="font-size:11px">'+a.technician+'</td>'+
+        '<td>'+(a.client_sig?'<span class="badge bg">✓ Подписан</span>':'<span class="badge br">—</span>')+'</td>'+
+        '<td style="display:flex;gap:4px"><button class="btn btn-b btn-sm" onclick="viewAct(\''+a.id+'\')">👁</button><button class="btn btn-s btn-sm" onclick="printActById(\''+a.id+'\')">🖨</button></td></tr>';
+    }).join('')+'</tbody></table>';
+}
+
+// DASHBOARD
+async function saveAct(direction){
+  var keys={deratization:{date:'dd-date',co:'dd-co',br:'dd-br',tech:'dd-tech',actions:'dd-actions',recs:'dd-recs',sigT:'sig-t-derat',sigC:'sig-c-derat',ok:'ok-derat',err:'err-derat'},
+    disinsection:{date:'di-date',co:'di-co',br:'di-br',tech:'di-tech',actions:'di-actions',recs:'di-recs',sigT:'sig-t-disins',sigC:'sig-c-disins',ok:'ok-disins',err:'err-disins'},
+    birds:{date:'bi-date',co:'bi-co',br:'bi-br',tech:'bi-tech',actions:'bi-actions',recs:'bi-recs',sigT:'sig-t-birds',sigC:'sig-c-birds',ok:'ok-birds',err:'err-birds'}};
+  var k=keys[direction];
+  var errEl=document.getElementById(k.err),okEl=document.getElementById(k.ok);
+  errEl.style.display='none';okEl.style.display='none';
+  var date=document.getElementById(k.date).value,co=document.getElementById(k.co).value.trim(),
+      br=document.getElementById(k.br).value.trim(),tech=document.getElementById(k.tech).value.trim(),
+      actions=document.getElementById(k.actions).value.trim();
+  if(!date||!co||!br||!tech||!actions){errEl.style.display='flex';setTimeout(function(){errEl.style.display='none';},4000);return;}
+  var clientSig=getSig(k.sigC);
+  if(!clientSig){errEl.textContent='⚠️ Необходима подпись заказчика';errEl.style.display='flex';setTimeout(function(){errEl.style.display='none';errEl.textContent='⚠️ Заполните все обязательные поля и подпись заказчика';},4000);return;}
+  var ad={};
+  if(direction==='deratization'){
+    ad.nr=[];document.querySelectorAll(".dd-nr-row").forEach(function(r){ad.nr.push({id:r.querySelector(".nr-id").value,loc:r.querySelector(".nr-loc").value,bait:r.querySelector(".nr-bait").value,drug:r.querySelector(".nr-drug")?r.querySelector(".nr-drug").value:"",eaten:r.querySelector(".nr-eaten").value,status:r.querySelector(".nr-status").value,rep:r.querySelector(".nr-rep").value,action:r.querySelector(".nr-action")?r.querySelector(".nr-action").value:""});});
+    ad.vn=[];document.querySelectorAll(".dd-vn-row").forEach(function(r){ad.vn.push({id:r.querySelector(".vn-id").value,loc:r.querySelector(".vn-loc").value,rod:r.querySelector(".vn-rod").value,glue:r.querySelector(".vn-glue").value,status:r.querySelector(".vn-status").value,rep:r.querySelector(".vn-rep").value,action:r.querySelector(".vn-action")?r.querySelector(".vn-action").value:""});});
+    ad.av=[];document.querySelectorAll(".dd-av-row").forEach(function(r){ad.av.push({id:r.querySelector(".av-id").value,loc:r.querySelector(".av-loc").value,type:r.querySelector(".av-type").value,rod:r.querySelector(".av-rod").value,ins:r.querySelector(".av-ins").value,status:r.querySelector(".av-status").value,action:r.querySelector(".av-action")?r.querySelector(".av-action").value:""});});
+    ad.il=[];document.querySelectorAll(".dd-il-row").forEach(function(r){ad.il.push({id:r.querySelector(".il-id").value,loc:r.querySelector(".il-loc").value,type:r.querySelector(".il-type").value,ins:r.querySelector(".il-ins").value,status:r.querySelector(".il-status").value,rep:r.querySelector(".il-rep").value,action:r.querySelector(".il-action")?r.querySelector(".il-action").value:""});});
+  }
+  if(direction==='disinsection'){
+    ad.zones=[];document.querySelectorAll('.di-zone-row').forEach(function(r){ad.zones.push({zone:r.querySelector('.z-zone').value,method:r.querySelector('.z-method').value,chem:r.querySelector('.z-chem').value,conc:r.querySelector('.z-conc').value,vol:r.querySelector('.z-vol').value,pest:r.querySelector('.z-pest').value});});
+    ad.dil=[];document.querySelectorAll(".di-il-row").forEach(function(r){ad.dil.push({id:r.querySelector(".dil-id").value,loc:r.querySelector(".dil-loc").value,ins:r.querySelector(".dil-ins").value,status:r.querySelector(".dil-status").value,rep:r.querySelector(".dil-rep").value,action:r.querySelector(".dil-action")?r.querySelector(".dil-action").value:""});});
+  }
+  if(direction==='birds'){
+    ad.eq=[];document.querySelectorAll('.bi-eq-row').forEach(function(r){ad.eq.push({zone:r.querySelector('.b-zone').value,bird:r.querySelector('.b-bird').value,equip:r.querySelector('.b-equip').value,qty:r.querySelector('.b-qty').value,cond:r.querySelector('.b-cond').value,eff:r.querySelector('.b-eff').value});});
+  }
+  ad.techSig=getSig(k.sigT);
+  var rec={direction:direction,date:date,client_company:co,branch:br,technician:tech,actions:actions,recommendations:document.getElementById(k.recs).value,act_data:JSON.stringify(ad),tech_sig:ad.techSig||null,client_sig:clientSig,user_email:CU?CU.email:'unknown'};
+  console.log('Saving act:',rec.direction, rec.date, rec.user_email);
+  var res=await sb.from('acts').insert([rec]);
+  if(res.error){
+    var msg=res.error.message||JSON.stringify(res.error);
+    alert('Ошибка сохранения: '+msg);
+    console.error('saveAct error:',res.error);
+    return;
+  }
+  okEl.style.display='flex';setTimeout(function(){okEl.style.display='none';},5000);
+  updateBadge();
+}
+
+// VIEW/PRINT ACT
+async function viewAct(id){var r=await sb.from('acts').select('*').eq('id',id).single();if(!r.error&&r.data)printActHTML(r.data);}
+async function printActById(id){var r=await sb.from('acts').select('*').eq('id',id).single();if(!r.error&&r.data)printActHTML(r.data);}
+
+function previewAct(direction){
+  var keys={deratization:{date:'dd-date',co:'dd-co',br:'dd-br',tech:'dd-tech',actions:'dd-actions',recs:'dd-recs',sigT:'sig-t-derat',sigC:'sig-c-derat'},
+    disinsection:{date:'di-date',co:'di-co',br:'di-br',tech:'di-tech',actions:'di-actions',recs:'di-recs',sigT:'sig-t-disins',sigC:'sig-c-disins'},
+    birds:{date:'bi-date',co:'bi-co',br:'bi-br',tech:'bi-tech',actions:'bi-actions',recs:'bi-recs',sigT:'sig-t-birds',sigC:'sig-c-birds'}};
+  var k=keys[direction];
+  var dummy={id:'PREVIEW',direction:direction,date:document.getElementById(k.date).value,client_company:document.getElementById(k.co).value||'Объект',branch:document.getElementById(k.br).value||'Адрес',technician:document.getElementById(k.tech).value||'Техник',actions:document.getElementById(k.actions).value,recommendations:document.getElementById(k.recs).value,act_data:buildPreviewData(direction,k)};
+  dummy.tech_sig=getSig(k.sigT);dummy.client_sig=getSig(k.sigC);
+  printActHTML(dummy);
+}
+function buildPreviewData(direction,k){
+  var ad={};
+  if(direction==='deratization'){
+    ad.nr=[];document.querySelectorAll('.dd-nr-row').forEach(function(r){ad.nr.push({id:r.querySelector('.nr-id').value,loc:r.querySelector('.nr-loc').value,bait:r.querySelector('.nr-bait').value,eaten:r.querySelector('.nr-eaten').value,status:r.querySelector('.nr-status').value,rep:r.querySelector('.nr-rep').value});});
+    ad.vn=[];document.querySelectorAll('.dd-vn-row').forEach(function(r){ad.vn.push({id:r.querySelector('.vn-id').value,loc:r.querySelector('.vn-loc').value,rod:r.querySelector('.vn-rod').value,glue:r.querySelector('.vn-glue').value,status:r.querySelector('.vn-status').value,rep:r.querySelector('.vn-rep').value});});
+    ad.av=[];document.querySelectorAll('.dd-av-row').forEach(function(r){ad.av.push({id:r.querySelector('.av-id').value,loc:r.querySelector('.av-loc').value,type:r.querySelector('.av-type').value,rod:r.querySelector('.av-rod').value,ins:r.querySelector('.av-ins').value,status:r.querySelector('.av-status').value});});
+    ad.il=[];document.querySelectorAll('.dd-il-row').forEach(function(r){ad.il.push({id:r.querySelector('.il-id').value,loc:r.querySelector('.il-loc').value,type:r.querySelector('.il-type').value,ins:r.querySelector('.il-ins').value,status:r.querySelector('.il-status').value,rep:r.querySelector('.il-rep').value});});
+  }
+  if(direction==='disinsection'){
+    ad.zones=[];document.querySelectorAll('.di-zone-row').forEach(function(r){ad.zones.push({zone:r.querySelector('.z-zone').value,method:r.querySelector('.z-method').value,chem:r.querySelector('.z-chem').value,conc:r.querySelector('.z-conc').value,vol:r.querySelector('.z-vol').value,pest:r.querySelector('.z-pest').value});});
+    ad.dil=[];document.querySelectorAll('.di-il-row').forEach(function(r){ad.dil.push({id:r.querySelector('.dil-id').value,loc:r.querySelector('.dil-loc').value,ins:r.querySelector('.dil-ins').value,status:r.querySelector('.dil-status').value,rep:r.querySelector('.dil-rep').value});});
+  }
+  if(direction==='birds'){
+    ad.eq=[];document.querySelectorAll('.bi-eq-row').forEach(function(r){ad.eq.push({zone:r.querySelector('.b-zone').value,bird:r.querySelector('.b-bird').value,equip:r.querySelector('.b-equip').value,qty:r.querySelector('.b-qty').value,cond:r.querySelector('.b-cond').value,eff:r.querySelector('.b-eff').value});});
+  }
+  return JSON.stringify(ad);
+}
+
+function printActHTML(act){
+  var d={};try{d=JSON.parse(act.act_data||'{}');}catch(e){}
+  var dn={deratization:'ДЕРАТИЗАЦИЯ',disinsection:'ДЕЗИНСЕКЦИЯ',birds:'ЗАЩИТА ОТ ПТИЦ'};
+  var dc2={deratization:'#1565C0',disinsection:'#E65100',birds:'#6A1B9A'};
+  var col=dc2[act.direction]||'#1B5E20';
+  var det='';
+  if(act.direction==='deratization'){
+    if(d.nr&&d.nr.length){det+='<h3 style="color:'+col+';margin:12pt 0 5pt">НР — Наружные контейнеры</h3><table><tr><th>№</th><th>Место</th><th>Приманка</th><th>Препарат</th><th>Съедено (шт)</th><th>Состояние</th><th>Замена</th><th>Корр. действия</th></tr>';d.nr.forEach(function(r){det+='<tr><td>'+r.id+'</td><td>'+r.loc+'</td><td>'+r.bait+'</td><td>'+(r.drug||'—')+'</td><td>'+r.eaten+'</td><td>'+r.status+'</td><td>'+r.rep+'</td><td>'+(r.action||'—')+'</td></tr>';});det+='</table>';}
+    if(d.vn&&d.vn.length){det+='<h3 style="color:'+col+';margin:12pt 0 5pt">ВН — Внутренние живоловки</h3><table><tr><th>№</th><th>Место</th><th>Грызунов</th><th>Приманка</th><th>Состояние</th><th>Замена клея</th><th>Корр. действия</th></tr>';d.vn.forEach(function(r){det+='<tr><td>'+r.id+'</td><td>'+r.loc+'</td><td>'+r.rod+'</td><td>'+(r.glue||'Клеевая подложка')+'</td><td>'+r.status+'</td><td>'+r.rep+'</td><td>'+(r.action||'—')+'</td></tr>';});det+='</table>';}
+    if(d.av&&d.av.length){det+='<h3 style="color:'+col+';margin:12pt 0 5pt">АВ — Амбарные ловушки</h3><table><tr><th>№</th><th>Место</th><th>Тип</th><th>Грызунов</th><th>Насекомых</th><th>Состояние</th><th>Корр. действия</th></tr>';d.av.forEach(function(r){det+='<tr><td>'+r.id+'</td><td>'+r.loc+'</td><td>'+r.type+'</td><td>'+r.rod+'</td><td>'+r.ins+'</td><td>'+r.status+'</td><td>'+(r.action||'—')+'</td></tr>';});det+='</table>';}
+    if(d.il&&d.il.length){det+='<h3 style="color:'+col+';margin:12pt 0 5pt">ИЛ — Инсектицидные лампы</h3><table><tr><th>№</th><th>Место</th><th>Тип</th><th>Насекомых</th><th>Состояние</th><th>Замена клея</th><th>Корр. действия</th></tr>';d.il.forEach(function(r){det+='<tr><td>'+r.id+'</td><td>'+r.loc+'</td><td>'+r.type+'</td><td>'+r.ins+'</td><td>'+r.status+'</td><td>'+r.rep+'</td><td>'+(r.action||'—')+'</td></tr>';});det+='</table>';}
+  }
+  if(act.direction==='disinsection'){
+    if(d.zones&&d.zones.length){det+='<h3 style="color:'+col+';margin:12pt 0 5pt">Обработанные участки</h3><table><tr><th>Участок</th><th>Вид отработки</th><th>Препарат</th><th>Концентрация</th><th>Объём</th><th>Вредитель</th></tr>';d.zones.forEach(function(r){det+='<tr><td>'+r.zone+'</td><td>'+r.method+'</td><td>'+r.chem+'</td><td>'+r.conc+'</td><td>'+r.vol+'</td><td>'+r.pest+'</td></tr>';});det+='</table>';}
+    if(d.dil&&d.dil.length){det+='<h3 style="color:'+col+';margin:12pt 0 5pt">ИЛ — Инсектицидные лампы</h3><table><tr><th>№</th><th>Место</th><th>Насекомых</th><th>Состояние</th><th>Замена</th><th>Корр. действия</th></tr>';d.dil.forEach(function(r){det+='<tr><td>'+r.id+'</td><td>'+r.loc+'</td><td>'+r.ins+'</td><td>'+r.status+'</td><td>'+r.rep+'</td><td>'+(r.action||'—')+'</td></tr>';});det+='</table>';}
+  }
+  if(act.direction==='birds'){
+    if(d.eq&&d.eq.length){det+='<h3 style="color:'+col+';margin:12pt 0 5pt">Применяемое оборудование</h3><table><tr><th>Участок</th><th>Вид птиц</th><th>Оборудование</th><th>Кол-во</th><th>Состояние</th><th>Эффективность</th></tr>';d.eq.forEach(function(r){det+='<tr><td>'+r.zone+'</td><td>'+r.bird+'</td><td>'+r.equip+'</td><td>'+r.qty+'</td><td>'+r.cond+'</td><td>'+r.eff+'</td></tr>';});det+='</table>';}
+  }
+  var sigs='<div style="display:grid;grid-template-columns:1fr 1fr;gap:20pt;margin-top:20pt">';
+  sigs+='<div><div style="font-size:9pt;color:#666;font-weight:600;margin-bottom:5pt">ПОДПИСЬ ТЕХНИКА</div>';
+  if(act.tech_sig)sigs+='<img src="'+act.tech_sig+'" style="width:100%;max-height:80px;object-fit:contain;border-bottom:1px solid #ccc">';
+  else sigs+='<div style="height:60px;border-bottom:1px solid #ccc"></div>';
+  sigs+='<div style="font-size:9pt;color:#666;margin-top:4pt">'+act.technician+'</div></div>';
+  sigs+='<div><div style="font-size:9pt;color:#666;font-weight:600;margin-bottom:5pt">ПОДПИСЬ ЗАКАЗЧИКА</div>';
+  if(act.client_sig)sigs+='<img src="'+act.client_sig+'" style="width:100%;max-height:80px;object-fit:contain;border-bottom:1px solid #ccc">';
+  else sigs+='<div style="height:60px;border-bottom:1px solid #ccc"></div>';
+  sigs+='<div style="font-size:9pt;color:#666;margin-top:4pt">'+act.client_company+'</div></div></div>';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Технический акт</title><style>@page{size:A4;margin:15mm}body{font-family:Arial,sans-serif;font-size:10pt;color:#333}h1{font-size:14pt;color:'+col+';margin:0 0 4pt}h2{font-size:11pt;color:'+col+';margin:10pt 0 4pt;border-bottom:1px solid '+col+';padding-bottom:2pt}h3{font-size:10pt;margin:10pt 0 4pt}.meta{font-size:8.5pt;color:#666;margin-bottom:12pt;line-height:1.8}table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:10pt}th{background:'+col+';color:white;padding:4pt;text-align:left}td{padding:4pt;border-bottom:1px solid #eee}tr:nth-child(even){background:#f9f9f9}.footer{position:fixed;bottom:0;left:0;right:0;font-size:7pt;color:#999;text-align:center;border-top:1px solid #eee;padding:3pt}</style></head><body>';
+  html+='<h1>ТЕХНИЧЕСКИЙ АКТ</h1><h2>'+(dn[act.direction]||act.direction)+'</h2>';
+  html+='<div class="meta"><b>Объект:</b> '+act.client_company+' &nbsp; <b>Адрес/Филиал:</b> '+act.branch+'<br><b>Дата:</b> '+act.date+' &nbsp; <b>Техник:</b> '+act.technician+' &nbsp; <b>№ Акта:</b> '+(act.id||'PREVIEW').toString().slice(-8).toUpperCase()+'</div>';
+  html+=det;
+  html+='<h2>Корректирующие действия</h2><p style="font-size:9pt;line-height:1.6">'+act.actions+'</p>';
+  if(act.recommendations)html+='<h2>Рекомендации</h2><p style="font-size:9pt;line-height:1.6">'+act.recommendations+'</p>';
+  html+=sigs;
+  html+='<div class="footer">Pest Control | '+act.client_company+' | '+act.date+' | Акт №'+(act.id||'PREVIEW').toString().slice(-8).toUpperCase()+'</div></body></html>';
+  var w=window.open('','_blank','width=900,height=700');w.document.write(html);w.document.close();w.focus();setTimeout(function(){w.print();},500);
+}
+
+// JOURNAL
+async function renderJournal(){
+  var s=document.getElementById('jj-s').value.toLowerCase(),d=document.getElementById('jj-d').value,
+      f=document.getElementById('jj-f').value,t=document.getElementById('jj-t').value;
+  var fl={};if(d)fl.direction=d;if(f)fl.from=f;if(t)fl.to=t;
+  // Load ALL acts (no date restriction when dates not set)
+  var acts=await getActs(fl);
+  if(s)acts=acts.filter(function(a){return(a.client_company+a.branch+a.technician).toLowerCase().includes(s);});
+  document.getElementById('jj-cnt').textContent=acts.length+' актов';
+  renderActsTable(acts,'journal-tbl');
+}
+
+// REPORTS
+async function renderReports(){
+  var period=document.getElementById('rp').value,dates=getPDReport(period);
+  document.getElementById('rep-kpi').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  var acts=await getActs({from:dates[0],to:dates[1]});
+  var s=calcStats(acts);
+  document.getElementById('rep-kpi').innerHTML=
+    kc('📋','Всего актов',acts.length,'green')+kc('🐀','Дератизация',s.derat,'blue')+
+    kc('🦟','Дезинсекция',s.disins,'orange')+kc('🦅','Птицы',s.birds,'purple')+
+    kc('🐁','Грызунов',s.rodents,s.rodents>0?'red':'green')+kc('🦟','Насекомых(ИЛ)',s.insects,s.insects>20?'red':'green');
+  var months=getLM(),mD=[],mI=[],mB=[];
+  months.forEach(function(m){mD.push(acts.filter(function(a){return a.direction==='deratization'&&a.date&&a.date.startsWith(m);}).length);mI.push(acts.filter(function(a){return a.direction==='disinsection'&&a.date&&a.date.startsWith(m);}).length);mB.push(acts.filter(function(a){return a.direction==='birds'&&a.date&&a.date.startsWith(m);}).length);});
+  dc('rb');charts['rb']=new Chart(document.getElementById('c-rb'),{type:'bar',data:{labels:['Дератизация','Дезинсекция','Птицы'],datasets:[{data:[s.derat,s.disins,s.birds],backgroundColor:['rgba(74,157,224,0.4)','rgba(224,140,58,0.4)','rgba(155,109,224,0.4)'],borderColor:['#4a9de0','#e08c3a','#9b6de0'],borderWidth:1.5,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a7060'},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#5a7060'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
+  dc('rl');charts['rl']=new Chart(document.getElementById('c-rl'),{type:'line',data:{labels:months.map(function(m){return m.slice(5);}),datasets:[{label:'Дератизация',data:mD,borderColor:'#4a9de0',tension:0.4,pointRadius:4,pointBackgroundColor:'#4a9de0'},{label:'Дезинсекция',data:mI,borderColor:'#e08c3a',tension:0.4,pointRadius:4,pointBackgroundColor:'#e08c3a'},{label:'Птицы',data:mB,borderColor:'#9b6de0',tension:0.4,pointRadius:4,pointBackgroundColor:'#9b6de0'}]},options:co()});
+  var cos={};acts.forEach(function(a){cos[a.client_company]=(cos[a.client_company]||0)+1;});
+  var cl=Object.keys(cos).slice(0,6),cv=cl.map(function(k){return cos[k];});
+  dc('rp2');charts['rp2']=new Chart(document.getElementById('c-rp'),{type:'doughnut',data:{labels:cl.length?cl:['Нет данных'],datasets:[{data:cv.length?cv:[1],backgroundColor:['rgba(74,182,96,0.7)','rgba(74,157,224,0.7)','rgba(224,140,58,0.7)','rgba(155,109,224,0.7)','rgba(224,82,82,0.7)','rgba(224,197,58,0.7)'],borderColor:'transparent'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#8fa894',font:{size:10},boxWidth:8,padding:6}}},cutout:'55%'}});
+  var eff=acts.length>0?Math.min(100,Math.round(50+acts.length*3)):0;
+  document.getElementById('rep-eff').textContent=acts.length>0?eff+'%':'—';
+  document.getElementById('rep-eff-bars').innerHTML=acts.length>0?eb('Дерат.',s.derat/Math.max(1,s.total)*100,'var(--blue)')+eb('Дезинс.',s.disins/Math.max(1,s.total)*100,'var(--orange)')+eb('Птицы',s.birds/Math.max(1,s.total)*100,'var(--purple)'):'<div style="text-align:center;font-size:11px;color:var(--text3);padding:8px">Нет данных</div>';
+  renderActsTable(acts,'rep-tbl');
+}
+
+// COMPARE
+async function renderCompare(){
+  var now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  var fmt=function(d){return d.toISOString().split('T')[0];};
+  var curr=await getActs({from:fmt(new Date(y,m,1)),to:fmt(new Date(y,m+1,0))});
+  var prev=await getActs({from:fmt(new Date(y,m-1,1)),to:fmt(new Date(y,m,0))});
+  var cs=calcStats(curr),ps=calcStats(prev);
+  var mn=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  function tr(a,b){if(b===0)return'';var p=Math.round((a-b)/b*100);return p>0?'<span class="tu">▲ '+p+'%</span>':'<span class="td">▼ '+Math.abs(p)+'%</span>';}
+  var html='<div class="cmp-grid"><div class="cmp-card"><div class="cmp-title">'+mn[m]+' '+y+' (текущий)</div>'+
+    '<div class="cmp-row"><span>Всего актов</span><span><b>'+cs.total+'</b> '+tr(cs.total,ps.total)+'</span></div>'+
+    '<div class="cmp-row"><span>Дератизация</span><span>'+cs.derat+' '+tr(cs.derat,ps.derat)+'</span></div>'+
+    '<div class="cmp-row"><span>Дезинсекция</span><span>'+cs.disins+' '+tr(cs.disins,ps.disins)+'</span></div>'+
+    '<div class="cmp-row"><span>Птицы</span><span>'+cs.birds+' '+tr(cs.birds,ps.birds)+'</span></div>'+
+    '<div class="cmp-row"><span>Грызунов</span><span style="color:var(--red)">'+cs.rodents+' '+tr(cs.rodents,ps.rodents)+'</span></div>'+
+    '<div class="cmp-row"><span>Насекомых</span><span>'+cs.insects+' '+tr(cs.insects,ps.insects)+'</span></div></div>'+
+    '<div class="cmp-card"><div class="cmp-title">'+mn[m-1>=0?m-1:11]+' '+(m>0?y:y-1)+' (прошлый)</div>'+
+    '<div class="cmp-row"><span>Всего актов</span><span><b>'+ps.total+'</b></span></div>'+
+    '<div class="cmp-row"><span>Дератизация</span><span>'+ps.derat+'</span></div>'+
+    '<div class="cmp-row"><span>Дезинсекция</span><span>'+ps.disins+'</span></div>'+
+    '<div class="cmp-row"><span>Птицы</span><span>'+ps.birds+'</span></div>'+
+    '<div class="cmp-row"><span>Грызунов</span><span style="color:var(--red)">'+ps.rodents+'</span></div>'+
+    '<div class="cmp-row"><span>Насекомых</span><span>'+ps.insects+'</span></div></div></div>';
+  html+='<div class="chart-card"><div class="chart-title">📊 Сравнение по направлениям</div><div style="height:220px"><canvas id="c-cmp"></canvas></div></div>';
+  document.getElementById('cmp-content').innerHTML=html;
+  dc('cmp');charts['cmp']=new Chart(document.getElementById('c-cmp'),{type:'bar',data:{labels:['Дератизация','Дезинсекция','Птицы','Грызунов','Насекомых'],datasets:[{label:mn[m-1>=0?m-1:11],data:[ps.derat,ps.disins,ps.birds,ps.rodents,ps.insects],backgroundColor:'rgba(74,157,224,0.3)',borderColor:'#4a9de0',borderWidth:1.5,borderRadius:4},{label:mn[m],data:[cs.derat,cs.disins,cs.birds,cs.rodents,cs.insects],backgroundColor:'rgba(74,182,96,0.3)',borderColor:'#4ab660',borderWidth:1.5,borderRadius:4}]},options:co()});
+}
+
+// PRINT REPORT
+async function printReport(){
+  var period='month';var rp=document.getElementById('rp');if(rp)period=rp.value;
+  var dates=getPD(period);var acts=await getActs({from:dates[0],to:dates[1]});var p=CP||{};
+  var s=calcStats(acts);
+  var rows=acts.slice(0,100).map(function(a,i){var dn={deratization:'Дератизация',disinsection:'Дезинсекция',birds:'Птицы'};var bg=i%2===0?'#f8f8f8':'#fff';return'<tr style="background:'+bg+'"><td>'+a.date+'</td><td>'+dn[a.direction]+'</td><td>'+a.client_company+'</td><td>'+a.branch+'</td><td>'+a.technician+'</td><td>'+(a.client_sig?'✓ Подписан':'—')+'</td></tr>';}).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Отчёт Pest Control</title><style>@page{size:A4;margin:14mm}body{font-family:Arial,sans-serif;font-size:10pt;color:#333}h1{font-size:15pt;color:#1B5E20;margin:0 0 4pt}h2{font-size:11pt;color:#1B5E20;margin:12pt 0 5pt;border-bottom:1px solid #1B5E20;padding-bottom:2pt}.meta{font-size:8.5pt;color:#666;margin-bottom:12pt;line-height:1.8}.kpi-row{display:flex;gap:10pt;margin-bottom:14pt}.kpi{flex:1;background:#f1f8e9;border:1px solid #c8e6c9;border-radius:4pt;padding:8pt;text-align:center}.kl{font-size:7.5pt;color:#555}.kv{font-size:18pt;font-weight:bold;color:#1B5E20}table{width:100%;border-collapse:collapse;font-size:8.5pt}th{background:#1B5E20;color:white;padding:4pt;text-align:left}td{padding:4pt;border-bottom:1px solid #eee}.footer{position:fixed;bottom:0;left:0;right:0;font-size:7pt;color:#999;text-align:center;border-top:1px solid #eee;padding:3pt}</style></head><body>';
+  html+='<h1>PEST CONTROL — СВОДНЫЙ ОТЧЁТ</h1><div class="meta"><b>Компания:</b> '+(p.company||'—')+' | <b>Составил:</b> '+(p.name||'—')+' | <b>Дата:</b> '+today+' | <b>Период:</b> '+dates[0]+' — '+dates[1]+'</div>';
+  html+='<h2>KPI — Ключевые показатели</h2><div class="kpi-row"><div class="kpi"><div class="kl">Всего актов</div><div class="kv">'+acts.length+'</div></div><div class="kpi"><div class="kl">Дератизация</div><div class="kv" style="color:#1565C0">'+s.derat+'</div></div><div class="kpi"><div class="kl">Дезинсекция</div><div class="kv" style="color:#E65100">'+s.disins+'</div></div><div class="kpi"><div class="kl">Птицы</div><div class="kv" style="color:#6A1B9A">'+s.birds+'</div></div><div class="kpi"><div class="kl">Грызунов</div><div class="kv" style="color:#c62828">'+s.rodents+'</div></div><div class="kpi"><div class="kl">Насекомых</div><div class="kv">'+s.insects+'</div></div></div>';
+  html+='<h2>Технические акты за период</h2><table><tr><th>Дата</th><th>Направление</th><th>Объект</th><th>Адрес/Филиал</th><th>Техник</th><th>Подпись</th></tr>'+rows+'</table>';
+  html+='<div class="footer">Pest Control Monitoring System | '+(p.company||'—')+' | '+today+'</div></body></html>';
+  var w=window.open('','_blank','width=900,height=700');w.document.write(html);w.document.close();w.focus();setTimeout(function(){w.print();},500);
+}
+
+// NAV
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+
+  if(id==='companies')loadCos();
+  if(id==='points'){renderPoints();}
+  if(id==='qrcodes'){renderQRPage();}
+
+  if(window.innerWidth<=768){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('open');}
+}
+function showDir(d,btn){
+  ['derat','disins','birds'].forEach(function(x){document.getElementById('dir-'+x).style.display=x===d?'block':'none';});
+  document.querySelectorAll('.dir-tab').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  // Auto-populate points
+  if(d==='derat' && pointsData.length>0) setTimeout(populateDератRows, 100);
+  if(d==='disins' && pointsData.length>0) setTimeout(populateDisinsRows, 100);
+  if(d==='birds' && pointsData.length>0) setTimeout(populateBirdsRows, 100);
+}
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('open');}
+function clearActForm(dir){
+  var maps={derat:{date:'dd-date',co:'dd-co',br:'dd-br',tech:'dd-tech',actions:'dd-actions',recs:'dd-recs',sigT:'sig-t-derat',sigC:'sig-c-derat'},
+    disins:{date:'di-date',co:'di-co',br:'di-br',tech:'di-tech',actions:'di-actions',recs:'di-recs',sigT:'sig-t-disins',sigC:'sig-c-disins'},
+    birds:{date:'bi-date',co:'bi-co',br:'bi-br',tech:'bi-tech',actions:'bi-actions',recs:'bi-recs',sigT:'sig-t-birds',sigC:'sig-c-birds'}};
+  var k=maps[dir];if(!k)return;
+  Object.values(k).forEach(function(id){var el=document.getElementById(id);if(!el)return;if(el.tagName==='CANVAS'){clearSig(id);}else if(el.type==='date'){el.value=today;}else{el.value='';}});
+}
+function addRow(containerId,rowClass){var t=document.querySelector('.'+rowClass).cloneNode(true);t.querySelectorAll('input').forEach(function(i){i.value=i.type==='number'?'0':'';});document.getElementById(containerId).appendChild(t);}
+
+// SIGNATURES
+function initSigs(){document.querySelectorAll('.sig-pad').forEach(function(canvas){var ctx=canvas.getContext('2d');ctx.strokeStyle='#4ab660';ctx.lineWidth=2;ctx.lineCap='round';var drawing=false,lx=0,ly=0;function pos(e,c){var r=c.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return[s.clientX-r.left,s.clientY-r.top];}canvas.addEventListener('mousedown',function(e){drawing=true;var p=pos(e,canvas);lx=p[0];ly=p[1];});canvas.addEventListener('touchstart',function(e){e.preventDefault();drawing=true;var p=pos(e,canvas);lx=p[0];ly=p[1];},{passive:false});canvas.addEventListener('mousemove',function(e){if(!drawing)return;var p=pos(e,canvas);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p[0],p[1]);ctx.stroke();lx=p[0];ly=p[1];});canvas.addEventListener('touchmove',function(e){e.preventDefault();if(!drawing)return;var p=pos(e,canvas);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p[0],p[1]);ctx.stroke();lx=p[0];ly=p[1];},{passive:false});canvas.addEventListener('mouseup',function(){drawing=false;});canvas.addEventListener('touchend',function(){drawing=false;});});}
+function clearSig(id){var c=document.getElementById(id);if(c){c.getContext('2d').clearRect(0,0,c.width,c.height);}}
+function getSig(id){var c=document.getElementById(id);if(!c)return null;var b=document.createElement('canvas');b.width=c.width;b.height=c.height;if(c.toDataURL()===b.toDataURL())return null;return c.toDataURL('image/png');}
+
+// ═══════════════════════════════════════════════════════════
+// REQUISITES (company details for acts)
+// ═══════════════════════════════════════════════════════════
+function getReq() {
+  return JSON.parse(localStorage.getItem('pc_requisites') || '{}');
+}
+function saveRequisites() {
+  var req = {
+    name:      document.getElementById('req-name').value.trim(),
+    bin:       document.getElementById('req-bin').value.trim(),
+    lic:       document.getElementById('req-lic').value.trim(),
+    addr:      document.getElementById('req-addr').value.trim(),
+    phone:     document.getElementById('req-phone').value.trim(),
+    email:     document.getElementById('req-email').value.trim(),
+    director:  document.getElementById('req-director').value.trim(),
+    techTitle: document.getElementById('req-tech-title').value.trim(),
+    sigTech:   getSig('sig-tech-main') || getReq().sigTech || null
+  };
+  localStorage.setItem('pc_requisites', JSON.stringify(req));
+  alert('✅ Реквизиты сохранены!');
+}
+function loadRequisites() {
+  var req = getReq();
+  var map = {
+    'req-name': req.name, 'req-bin': req.bin, 'req-lic': req.lic,
+    'req-addr': req.addr, 'req-phone': req.phone, 'req-email': req.email,
+    'req-director': req.director, 'req-tech-title': req.techTitle
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && map[id]) el.value = map[id];
+  });
+}
+function clearSig(id) {
+  var c = document.getElementById(id);
+  if (!c) return;
+  c.getContext('2d').clearRect(0,0,c.width,c.height);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INSPECTION HISTORY STORAGE
+// ═══════════════════════════════════════════════════════════
+// Each inspection is saved as: { pointId, company, type, date, data: {...}, sigTech, sigClient, techName, clientName, clientTitle }
+function getInspHistory() {
+  return JSON.parse(localStorage.getItem('pc_insp_history') || '[]');
+}
+function saveInspHistory(h) {
+  localStorage.setItem('pc_insp_history', JSON.stringify(h));
+}
+
+// ── saveInspectionOnly: save point inspection WITHOUT opening signs (called per-point) ──
+function saveInspectionOnly(idx) {
+  if (!pointsData[idx]) return;
+  var fields = document.querySelectorAll('.insp-field[data-idx="'+idx+'"]');
+  if (!pointsData[idx].inspection_data) pointsData[idx].inspection_data = {};
+  var data = {};
+  fields.forEach(function(f) {
+    var k = f.getAttribute('data-key');
+    pointsData[idx].inspection_data[k] = f.value;
+    data[k] = f.value;
+  });
+  var dateStr = new Date().toISOString().split('T')[0];
+  pointsData[idx].last_inspected = dateStr;
+  savePoints();
+
+  // Save to history (unsigned, no session yet)
+  var h = getInspHistory();
+  var req = getReq();
+  // Update existing entry for today or add new
+  var existing = -1;
+  for (var i = h.length-1; i >= 0; i--) {
+    if (h[i].pointId === pointsData[idx].id && h[i].company === pointsData[idx].company && h[i].date === dateStr) {
+      existing = i; break;
+    }
+  }
+  var entry = {
+    pointId:     pointsData[idx].id,
+    company:     pointsData[idx].company,
+    type:        pointsData[idx].type,
+    location:    pointsData[idx].location || pointsData[idx].id,
+    date:        dateStr,
+    data:        data,
+    sigTech:     req.sigTech || null,
+    techName:    req.director || (CP && CP.name) || '',
+    techTitle:   req.techTitle || 'Технический специалист',
+    clientName:  '',
+    clientTitle: '',
+    sigClient:   null,
+    sessionId:   null
+  };
+  if (existing >= 0) h[existing] = entry;
+  else h.push(entry);
+  saveInspHistory(h);
+
+  // Visual feedback
+  var row = document.getElementById('insp-row-'+idx);
+  if (row) {
+    var btn = row.querySelector('button');
+    if (btn) { btn.textContent = '✅ Сохранено!'; btn.style.background = 'var(--green-dim)'; btn.style.color = 'var(--green)'; }
+    setTimeout(function() { if (document.getElementById('insp-row-'+idx)) { row.remove(); } }, 1200);
+  }
+  renderPoints();
+}
+
+// ── markInspected: legacy alias ──
+
+
+// ═══════════════════════════════════════════════════════════
+// SESSION (full round inspection + bulk sign + print)
+// ═══════════════════════════════════════════════════════════
+function startSessionPanel() {
+  var panel = document.getElementById('session-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'block') {
+    var req = getReq();
+    document.getElementById('sess-pest-co').value   = req.name || (CP && CP.company) || '';
+    document.getElementById('sess-tech-name').value = req.director || (CP && CP.name) || '';
+    document.getElementById('sess-date').value = today;
+    document.getElementById('sess-err').style.display = 'none';
+  }
+}
+function getSessionEntries() {
+  var dateStr   = document.getElementById('sess-date').value || today;
+  var objFilter = (document.getElementById('sess-obj-filter').value || '').trim().toLowerCase();
+  return getInspHistory().filter(function(e) {
+    if (e.date !== dateStr) return false;
+    if (objFilter && !(e.company||'').toLowerCase().includes(objFilter)) return false;
+    return true;
+  });
+}
+function validateSession() {
+  var co   = document.getElementById('sess-pest-co').value.trim();
+  var tech = document.getElementById('sess-tech-name').value.trim();
+  var date = document.getElementById('sess-date').value;
+  var err  = document.getElementById('sess-err');
+  if (!co || !tech || !date) {
+    err.textContent = '⚠️ Заполните обязательные поля: Компания Pest Control, ФИО техника, Дата осмотра';
+    err.style.display = 'block'; return false;
+  }
+  var entries = getSessionEntries();
+  if (!entries.length) {
+    err.textContent = '⚠️ Нет осмотренных точек за выбранную дату. Сначала сохраните осмотры.';
+    err.style.display = 'block'; return false;
+  }
+  err.style.display = 'none'; return true;
+}
+function applySessionMeta(sessionId, co, tech, date) {
+  var req = getReq();
+  var h = getInspHistory();
+  h.forEach(function(e, i) {
+    if (e.date === date) {
+      h[i].sessionPestCo = co; h[i].sessionTech = tech;
+      h[i].sessionDate   = date; h[i].sessionId  = sessionId;
+      h[i].techName      = tech;
+      h[i].sigTech       = req.sigTech || e.sigTech || null;
+    }
+  });
+  saveInspHistory(h);
+}
+function finishSessionWithSigns() {
+  if (!validateSession()) return;
+  var co   = document.getElementById('sess-pest-co').value.trim();
+  var tech = document.getElementById('sess-tech-name').value.trim();
+  var date = document.getElementById('sess-date').value;
+  var sessionId = 'sess-' + date + '-' + Date.now();
+  applySessionMeta(sessionId, co, tech, date);
+  document.getElementById('session-panel').style.display = 'none';
+  openSessionSignsModal(sessionId, co, tech, date);
+}
+function finishSessionSilent() {
+  if (!validateSession()) return;
+  var co   = document.getElementById('sess-pest-co').value.trim();
+  var tech = document.getElementById('sess-tech-name').value.trim();
+  var date = document.getElementById('sess-date').value;
+  var sessionId = 'sess-' + date + '-' + Date.now();
+  applySessionMeta(sessionId, co, tech, date);
+  document.getElementById('session-panel').style.display = 'none';
+  var cnt = getInspHistory().filter(function(e){return e.sessionId===sessionId;}).length;
+  alert('Обход сохранён без подписи. Точек: ' + cnt);
+}
+var _sessionSignId = null;
+function openSessionSignsModal(sessionId, pestCo, techName, date) {
+  _sessionSignId = sessionId;
+  var req = getReq();
+  document.getElementById('sign-tech-name').value    = techName || '';
+  document.getElementById('sign-tech-date').value    = date || today;
+  document.getElementById('sign-client-name').value  = '';
+  document.getElementById('sign-client-title').value = '';
+  var m = document.getElementById('modal-signs');
+  m.style.display = 'flex';
+  setTimeout(function() {
+    initSigs();
+    if (req.sigTech) {
+      var c = document.getElementById('sig-act-tech');
+      var img = new Image();
+      img.onload = function() { c.getContext('2d').drawImage(img,0,0); };
+      img.src = req.sigTech;
+    }
+  }, 50);
+  window._sigConfirmMode = 'session';
+}
+function confirmSignsAndPrint() {
+  if (window._sigConfirmMode === 'session') { confirmSessionSigns(); return; }
+  if (_pendingHistIdx === null) return;
+  var h = getInspHistory();
+  var entry = h[_pendingHistIdx];
+  var sigTech   = getSig('sig-act-tech');
+  var sigClient = getSig('sig-act-client');
+  entry.sigTech     = sigTech || entry.sigTech;
+  entry.sigClient   = sigClient;
+  entry.techName    = document.getElementById('sign-tech-name').value.trim();
+  entry.clientName  = document.getElementById('sign-client-name').value.trim();
+  entry.clientTitle = document.getElementById('sign-client-title').value.trim();
+  saveInspHistory(h);
+  document.getElementById('modal-signs').style.display = 'none';
+  printAct(entry);
+}
+function confirmSessionSigns() {
+  var sigTech     = getSig('sig-act-tech');
+  var sigClient   = getSig('sig-act-client');
+  var techName    = document.getElementById('sign-tech-name').value.trim();
+  var clientName  = document.getElementById('sign-client-name').value.trim();
+  var clientTitle = document.getElementById('sign-client-title').value.trim();
+  var h = getInspHistory();
+  h.forEach(function(e, i) {
+    if (e.sessionId === _sessionSignId) {
+      h[i].sigTech = sigTech || e.sigTech; h[i].sigClient = sigClient;
+      h[i].techName = techName; h[i].clientName = clientName; h[i].clientTitle = clientTitle;
+    }
+  });
+  saveInspHistory(h);
+  document.getElementById('modal-signs').style.display = 'none';
+  window._sigConfirmMode = null;
+  printSessionAct(_sessionSignId);
+}
+function printSessionAct(sessionId) {
+  var all = getInspHistory().filter(function(e){ return e.sessionId === sessionId; });
+  if (!all.length) return;
+  var req = getReq();
+  var first    = all[0];
+  var pestCo   = first.sessionPestCo || req.name  || (CP && CP.company) || '—';
+  var techName = first.sessionTech   || first.techName || '—';
+  var date     = first.sessionDate   || first.date || today;
+  var techTitle= req.techTitle || 'Технический специалист';
+  var sigTH    = first.sigTech   ? '<img src="'+first.sigTech+'"   style="height:52px;display:block;margin-bottom:3px">' : '<div style="height:52px;border-bottom:1px solid #000;width:190px;margin-bottom:3px"></div>';
+  var sigCH    = first.sigClient ? '<img src="'+first.sigClient+'" style="height:52px;display:block;margin-bottom:3px">' : '<div style="height:52px;border-bottom:1px solid #000;width:190px;margin-bottom:3px"></div>';
+  var objects  = all.map(function(e){return e.company;}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(', ');
+  var actNo    = 'ACT-' + date.replace(/-/g,'') + '-' + ('000'+all.length).slice(-3);
+
+  var warnings = all.filter(function(e){ return e.data && (parseInt(e.data.rodents||0)>0||parseInt(e.data.insects||0)>0||e.data.action); });
+  var warnBlock = warnings.length
+    ? '<div style="background:#fff8e1;border:2px solid #f0a000;border-radius:4pt;padding:7pt;margin:8pt 0;font-size:8.5pt"><b>⚠️ ОТКЛОНЕНИЯ HACCP (' + warnings.length + ' точек):</b><br>' +
+      warnings.map(function(e){ return '• ' + e.pointId + ': ' + (e.data.action||'выявлены вредители'); }).join('<br>') + '</div>'
+    : '<div style="background:#e8f5e9;border:1px solid #4caf50;border-radius:4pt;padding:7pt;margin:8pt 0;font-size:8.5pt"><b>✓ HACCP:</b> Отклонений не выявлено. Все контрольные точки в норме.</div>';
+
+  var rows = all.map(function(e){
+    var p = pointsData.filter(function(x){ return x.id===e.pointId && x.company===e.company; })[0];
+    var def = p ? (HACCP_DEFAULTS[p.type]||{label:e.type}) : {label:e.type||''};
+    var warn = (parseInt(e.data.rodents||0)>0||parseInt(e.data.insects||0)>0) ? 'background:#fff3cd;' : '';
+    return '<tr style="'+warn+'">' +
+      '<td style="border:1px solid #ccc;padding:4pt 5pt;font-weight:700;font-size:8.5pt;white-space:nowrap">'+e.pointId+'</td>' +
+      '<td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt">'+def.label+'</td>' +
+      '<td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt">'+e.location+'</td>' +
+      '<td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt">'+(e.data.status||'—')+'</td>' +
+      '<td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt">'+(e.data.bait||'—')+'</td>' +
+      '<td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt">'+(e.data.drug||'—')+'</td>' +
+      '<td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt;color:'+(e.data.action?'#c85000':'#555')+'">'+(e.data.action?'⚠️ '+e.data.action:'—')+'</td>' +
+    '</tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Акт '+actNo+'</title>' +
+    '<style>@page{size:A4;margin:13mm}body{font-family:Arial,sans-serif;font-size:9.5pt;color:#111}' +
+    'h1{font-size:13pt;color:#1B5E20;margin:0 0 2pt}h2{font-size:9pt;font-weight:400;color:#555;margin:0 0 8pt}' +
+    '.hdr{display:flex;justify-content:space-between;border-bottom:2px solid #1B5E20;padding-bottom:9pt;margin-bottom:10pt}' +
+    '.req{font-size:7.5pt;color:#555;line-height:1.7;text-align:right}' +
+    'table{width:100%;border-collapse:collapse;margin-top:6pt}' +
+    'th{background:#1B5E20;color:#fff;padding:4pt 5pt;font-size:8pt;text-align:left}' +
+    '.sigs{display:grid;grid-template-columns:1fr 1fr;gap:20pt;margin-top:16pt;padding-top:12pt;border-top:1px solid #ccc}' +
+    '.slbl{font-size:7.5pt;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:4pt}' +
+    '.sname{font-size:8.5pt;margin-top:3pt}.stitle{font-size:7.5pt;color:#666}' +
+    '.foot{font-size:6.5pt;color:#aaa;margin-top:12pt;border-top:1px solid #eee;padding-top:5pt}' +
+    '</style></head><body>' +
+    '<div class="hdr">' +
+      '<div><h1>АКТ МОНИТОРИНГА ВРЕДИТЕЛЕЙ</h1><h2>Стандарт HACCP — Обход контрольных точек</h2>' +
+        '<div style="font-size:8pt;color:#888">Акт № '+actNo+' от '+date+'</div>' +
+      '</div>' +
+      '<div class="req">' +
+        '<b style="font-size:10pt;color:#1B5E20">'+pestCo+'</b><br>' +
+        (req.bin  ? 'БИН/ИНН: '+req.bin+'<br>'  : '') +
+        (req.lic  ? 'Лицензия: '+req.lic+'<br>' : '') +
+        (req.addr ? req.addr+'<br>'              : '') +
+        (req.phone? req.phone                    : '') +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6pt;font-size:8.5pt;margin-bottom:8pt">' +
+      '<div><b>Объект(ы):</b> '+objects+'</div>' +
+      '<div><b>Дата осмотра:</b> '+date+'</div>' +
+      '<div><b>Техник:</b> '+techName+'</div>' +
+    '</div>' +
+    warnBlock +
+    '<table><thead><tr>' +
+      '<th>ID точки</th><th>Оборудование</th><th>Место</th><th>Состояние</th><th>Приманка</th><th>Средство</th><th>Корр. действия</th>' +
+    '</tr></thead><tbody>'+rows+'</tbody></table>' +
+    '<div class="sigs">' +
+      '<div><div class="slbl">Исполнитель (Pest Control)</div>'+sigTH+'<div class="sname">'+techName+'</div><div class="stitle">'+techTitle+'</div><div class="stitle">Дата: '+date+'</div></div>' +
+      '<div><div class="slbl">Ответственное лицо объекта</div>'+sigCH+'<div class="sname">'+(first.clientName||'_______________________')+'</div><div class="stitle">'+(first.clientTitle||'Должность')+'</div><div class="stitle">Дата: ___________________</div></div>' +
+    '</div>' +
+    '<div class="foot">Документ сформирован системой Pest Control · Стандарт HACCP (ISO 22000) · '+pestCo+(req.lic?' · Лицензия: '+req.lic:'')+'</div>' +
+    '</body></html>';
+
+  var w = window.open('', '_blank', 'width=900,height=950');
+  w.document.write(html); w.document.close(); w.focus();
+  setTimeout(function(){ w.print(); }, 700);
+}
+
+// ═══════════════════════════════════════════════════════════
+// SIGNATURES MODAL
+// ═══════════════════════════════════════════════════════════
+var _pendingHistIdx = null;
+function openSignsModal(histIdx) {
+  _pendingHistIdx = histIdx;
+  var h = getInspHistory()[histIdx];
+  var req = getReq();
+  document.getElementById('sign-tech-name').value  = h.techName || '';
+  document.getElementById('sign-tech-date').value  = h.date || today;
+  document.getElementById('sign-client-name').value  = h.clientName || '';
+  document.getElementById('sign-client-title').value = h.clientTitle || '';
+  var m = document.getElementById('modal-signs');
+  m.style.display = 'flex';
+  setTimeout(function() {
+    initSigs();
+    // Pre-draw saved tech sig
+    if (h.sigTech) {
+      var c = document.getElementById('sig-act-tech');
+      var img = new Image();
+      img.onload = function() { c.getContext('2d').drawImage(img,0,0); };
+      img.src = h.sigTech;
+    }
+  }, 50);
+}
+// confirmSignsAndPrint: see session section above
+
+// ═══════════════════════════════════════════════════════════
+// HISTORY MODAL — open on QR hover / button
+// ═══════════════════════════════════════════════════════════
+var _currentPointKey = null;
+function openHistoryModal(pointId, company) {
+  _currentPointKey = {pointId: pointId, company: company};
+  var h = getInspHistory().filter(function(e){ return e.pointId===pointId && e.company===company; });
+  var p = pointsData.filter(function(x){ return x.id===pointId && x.company===company; })[0];
+  var def = p ? (HACCP_DEFAULTS[p.type] || {}) : {};
+
+  document.getElementById('mh-title').textContent = '📋 История мониторинга: ' + pointId;
+  document.getElementById('mh-sub').textContent   = (company || '') + (p ? ' · ' + (def.label || p.type) : '');
+
+  // Populate date selector
+  var sel = document.getElementById('mh-date-sel');
+  sel.innerHTML = '';
+  if (!h.length) {
+    sel.innerHTML = '<option>— Нет записей —</option>';
+    document.getElementById('mh-body').innerHTML = '<div class="empty">📭 По этой точке ещё нет актов осмотра.</div>';
+  } else {
+    h.slice().reverse().forEach(function(e, i) {
+      var opt = document.createElement('option');
+      opt.value = getInspHistory().indexOf(e);
+      opt.textContent = e.date + (e.clientName ? ' ✍️' : '');
+      sel.appendChild(opt);
+    });
+    renderHistoryForDate();
+  }
+  document.getElementById('modal-history').style.display = 'flex';
+}
+function renderHistoryForDate() {
+  var sel = document.getElementById('mh-date-sel');
+  var idx = parseInt(sel.value);
+  var h = getInspHistory();
+  var entry = h[idx];
+  if (!entry) { document.getElementById('mh-body').innerHTML = '<div class="empty">Нет данных</div>'; return; }
+
+  var p = pointsData.filter(function(x){ return x.id===entry.pointId && x.company===entry.company; })[0];
+  var def = p ? (HACCP_DEFAULTS[p.type] || {fields:[]}) : {fields:[]};
+
+  var fieldsHtml = def.fields.map(function(f) {
+    var val = entry.data[f.key] || '—';
+    var isAlert = (f.key==='rodents'||f.key==='insects') && parseInt(val)>0;
+    var isCrit  = f.key==='action' && val && val!=='—';
+    return '<tr style="background:'+(isCrit?'rgba(224,140,58,0.06)':isAlert?'rgba(224,82,82,0.06)':'transparent')+'">' +
+      '<td style="font-size:11px;color:var(--text3);width:40%">'+f.label+'</td>' +
+      '<td style="font-size:12px;font-weight:'+(isAlert||isCrit?'700':'400')+';color:'+(isAlert?'var(--red)':isCrit?'var(--orange)':'var(--text)')+'">'+
+        (isAlert?'⚠️ ':isCrit?'📌 ':'')+val+'</td></tr>';
+  }).join('');
+
+  var req = getReq();
+  var sigTechHtml   = entry.sigTech   ? '<img src="'+entry.sigTech+'"   style="height:50px;border:1px solid var(--border);border-radius:6px;background:#fff;padding:4px">' : '<span style="font-size:11px;color:var(--text3)">Не подписан</span>';
+  var sigClientHtml = entry.sigClient ? '<img src="'+entry.sigClient+'" style="height:50px;border:1px solid var(--border);border-radius:6px;background:#fff;padding:4px">' : '<span style="font-size:11px;color:var(--text3)">Не подписан</span>';
+
+  document.getElementById('mh-body').innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;font-size:12px">' +
+      '<div><span style="color:var(--text3)">Точка:</span> <b>'+entry.pointId+'</b></div>' +
+      '<div><span style="color:var(--text3)">Дата:</span> <b>'+entry.date+'</b></div>' +
+      '<div><span style="color:var(--text3)">Объект:</span> '+entry.company+'</div>' +
+      '<div><span style="color:var(--text3)">Место:</span> '+(entry.location||'—')+'</div>' +
+    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:16px"><tbody>'+fieldsHtml+'</tbody></table>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;border-top:1px solid var(--border);padding-top:14px">' +
+      '<div><div style="font-size:10px;color:var(--text3);margin-bottom:6px;font-weight:700">ИСПОЛНИТЕЛЬ</div>'+
+        sigTechHtml+'<div style="font-size:11px;margin-top:4px">'+(entry.techName||'—')+'</div>' +
+        '<div style="font-size:10px;color:var(--text3)">'+(entry.techTitle||'')+'</div></div>' +
+      '<div><div style="font-size:10px;color:var(--text3);margin-bottom:6px;font-weight:700">ОТВЕТСТВЕННОЕ ЛИЦО</div>'+
+        sigClientHtml+'<div style="font-size:11px;margin-top:4px">'+(entry.clientName||'—')+'</div>' +
+        '<div style="font-size:10px;color:var(--text3)">'+(entry.clientTitle||'')+'</div></div>' +
+    '</div>' +
+    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn btn-sm" style="background:var(--green-dim);color:var(--green);border:1px solid var(--border2)" onclick="openSignsModalForHistory('+idx+')">✍️ Добавить/изменить подписи</button>' +
+    '</div>';
+}
+
+function openSignsModalForHistory(histIdx) {
+  document.getElementById('modal-history').style.display = 'none';
+  openSignsModal(histIdx);
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRINT ACT (HACCP Technical Act)
+// ═══════════════════════════════════════════════════════════
+var _printEntry = null;
+function printCurrentAct() {
+  var sel = document.getElementById('mh-date-sel');
+  var idx = parseInt(sel.value);
+  var h = getInspHistory();
+  if (h[idx]) printAct(h[idx]);
+}
+function printAct(entry) {
+  _printEntry = entry;
+  var req = getReq();
+  var p = pointsData.filter(function(x){ return x.id===entry.pointId && x.company===entry.company; })[0];
+  var def = p ? (HACCP_DEFAULTS[p.type] || {fields:[],label:p.type}) : {fields:[],label:entry.type||''};
+
+  var fieldsRows = def.fields.map(function(f) {
+    var val = entry.data[f.key] || '—';
+    return '<tr><td style="padding:5pt 8pt;border:1px solid #ccc;font-size:9pt;color:#555;width:40%">'+f.label+'</td>' +
+           '<td style="padding:5pt 8pt;border:1px solid #ccc;font-size:9pt;font-weight:600">'+val+'</td></tr>';
+  }).join('');
+
+  var sigTechHtml   = entry.sigTech   ? '<img src="'+entry.sigTech+'"   style="height:55px;display:block;margin-bottom:4px">' : '<div style="height:55px;border-bottom:1px solid #000;width:180px;margin-bottom:4px"></div>';
+  var sigClientHtml = entry.sigClient ? '<img src="'+entry.sigClient+'" style="height:55px;display:block;margin-bottom:4px">' : '<div style="height:55px;border-bottom:1px solid #000;width:180px;margin-bottom:4px"></div>';
+
+  var haccpWarnings = [];
+  if (parseInt(entry.data.rodents||0) > 0) haccpWarnings.push('⚠️ Обнаружено грызунов: ' + entry.data.rodents);
+  if (parseInt(entry.data.insects||0) > 5) haccpWarnings.push('⚠️ Обнаружено насекомых: ' + entry.data.insects);
+  if (entry.data.action && entry.data.action.trim()) haccpWarnings.push('📌 Корр. действие: ' + entry.data.action);
+
+  var warnBlock = haccpWarnings.length
+    ? '<div style="background:#fff8e1;border:2px solid #f0a000;border-radius:6pt;padding:8pt;margin:10pt 0;font-size:9pt"><b>⚠️ ОТКЛОНЕНИЯ HACCP:</b><br>' + haccpWarnings.join('<br>') + '</div>'
+    : '<div style="background:#e8f5e9;border:1px solid #4caf50;border-radius:6pt;padding:8pt;margin:10pt 0;font-size:9pt"><b>✓ HACCP:</b> Отклонений не выявлено.</div>';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Технический акт ' + entry.pointId + '</title>' +
+    '<style>@page{size:A4;margin:15mm}body{font-family:Arial,sans-serif;font-size:10pt;color:#111}' +
+    'h1{font-size:14pt;color:#1B5E20;margin:0 0 4pt}h2{font-size:10pt;color:#555;margin:0 0 10pt;font-weight:400}' +
+    '.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1B5E20;padding-bottom:10pt;margin-bottom:12pt}' +
+    '.req-block{font-size:8pt;color:#666;line-height:1.6}' +
+    'table.main{width:100%;border-collapse:collapse;margin-bottom:10pt}' +
+    '.sigs{display:grid;grid-template-columns:1fr 1fr;gap:20pt;margin-top:16pt;padding-top:12pt;border-top:1px solid #ccc}' +
+    '.sig-block{font-size:9pt}.sig-label{font-size:8pt;color:#666;margin-bottom:4pt;font-weight:700;text-transform:uppercase}' +
+    '.act-no{font-size:8pt;color:#aaa}' +
+    '</style></head><body>' +
+    '<div class="header">' +
+      '<div><h1>ТЕХНИЧЕСКИЙ АКТ МОНИТОРИНГА</h1><h2>Стандарт HACCP | Контрольная точка: ' + entry.pointId + '</h2>' +
+        '<div class="act-no">Акт № ' + entry.pointId + '-' + entry.date.replace(/-/g,'') + ' от ' + entry.date + '</div>' +
+      '</div>' +
+      '<div class="req-block" style="text-align:right">' +
+        '<b style="font-size:10pt;color:#1B5E20">' + (req.name || (CP&&CP.company) || 'Pest Control') + '</b><br>' +
+        (req.bin ? 'БИН/ИНН: ' + req.bin + '<br>' : '') +
+        (req.lic ? 'Лицензия: ' + req.lic + '<br>' : '') +
+        (req.addr ? req.addr + '<br>' : '') +
+        (req.phone ? req.phone + '<br>' : '') +
+        (req.email ? req.email : '') +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10pt;font-size:9pt;margin-bottom:10pt">' +
+      '<div><b>Объект:</b> ' + (entry.company||'—') + '</div>' +
+      '<div><b>Дата осмотра:</b> ' + entry.date + '</div>' +
+      '<div><b>Точка / Оборудование:</b> ' + entry.pointId + ' — ' + def.label + '</div>' +
+      '<div><b>Место:</b> ' + (entry.location||'—') + '</div>' +
+    '</div>' +
+    warnBlock +
+    '<table class="main"><tbody>' + fieldsRows + '</tbody></table>' +
+    '<div class="sigs">' +
+      '<div class="sig-block"><div class="sig-label">Исполнитель (Pest Control)</div>' + sigTechHtml +
+        '<div>' + (entry.techName||'________________________') + '</div>' +
+        '<div style="font-size:8pt;color:#666">' + (entry.techTitle||'') + '</div>' +
+        '<div style="font-size:8pt;color:#666">Дата: ' + entry.date + '</div>' +
+      '</div>' +
+      '<div class="sig-block"><div class="sig-label">Ответственное лицо объекта</div>' + sigClientHtml +
+        '<div>' + (entry.clientName||'________________________') + '</div>' +
+        '<div style="font-size:8pt;color:#666">' + (entry.clientTitle||'Должность') + '</div>' +
+        '<div style="font-size:8pt;color:#666">Дата: ___________________</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:16pt;font-size:7pt;color:#999;border-top:1px solid #eee;padding-top:6pt">' +
+      'Документ сформирован автоматически системой контроля вредителей Pest Control. Стандарт HACCP (ISO 22000). ' +
+      (req.name||'') + (req.lic ? ' · Лицензия: ' + req.lic : '') +
+    '</div>' +
+    '</body></html>';
+
+  var w = window.open('', '_blank', 'width=800,height=900');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function() { w.print(); }, 600);
+}
+
+// ═══════════════════════════════════════════════════════════
+// EMAIL ACT
+// ═══════════════════════════════════════════════════════════
+function emailCurrentAct() {
+  var sel = document.getElementById('mh-date-sel');
+  var idx = parseInt(sel.value);
+  var h = getInspHistory();
+  var entry = h[idx];
+  if (!entry) return;
+  var req = getReq();
+  var to = req.email || (CP && CP.email) || '';
+  var subject = encodeURIComponent('Технический акт мониторинга ' + entry.pointId + ' от ' + entry.date);
+  var p = pointsData.filter(function(x){ return x.id===entry.pointId && x.company===entry.company; })[0];
+  var def = p ? (HACCP_DEFAULTS[p.type]||{fields:[]}) : {fields:[]};
+  var bodyLines = [
+    'Технический акт мониторинга HACCP',
+    'Точка: ' + entry.pointId,
+    'Объект: ' + entry.company,
+    'Дата: ' + entry.date,
+    '',
+    'ПАРАМЕТРЫ ОСМОТРА:'
+  ];
+  def.fields.forEach(function(f) {
+    bodyLines.push(f.label + ': ' + (entry.data[f.key]||'—'));
+  });
+  bodyLines.push('');
+  bodyLines.push('Исполнитель: ' + (entry.techName||'—'));
+  bodyLines.push('Ответственное лицо: ' + (entry.clientName||'—'));
+  bodyLines.push('');
+  bodyLines.push('Сформировано системой Pest Control.');
+  var body = encodeURIComponent(bodyLines.join('\n'));
+  window.location.href = 'mailto:' + to + '?subject=' + subject + '&body=' + body;
+}
+
+// UPDATE BADGE
+async function updateBadge(){var el=document.getElementById('badge-today');if(el){var r=await getActs({from:today,to:today});el.textContent=r.length;}}
+
+// USERS
+async function loadUsers(){document.getElementById('users-tbl').innerHTML='<table><thead><tr><th>Email</th><th>Имя</th><th>Компания</th><th>Город</th><th>Роль</th></tr></thead><tbody><tr><td>'+CU.email+'</td><td>'+(CP.name||'—')+'</td><td>'+(CP.company||'—')+'</td><td>'+(CP.city||'—')+'</td><td><span class="badge bg">'+CP.role+'</span></td></tr></tbody></table>';}
+
+// COMPANIES
+var coData=JSON.parse(localStorage.getItem('pc_cos')||'[]');
+function loadCos(){var el=document.getElementById('co-list');if(!coData.length){el.innerHTML='<div class="empty">🏢 Добавьте компанию/филиал</div>';return;}el.innerHTML=coData.map(function(c,i){return'<div class="form-card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600">'+c.name+'</div><div style="font-size:12px;color:var(--text2)">'+c.city+' | '+c.addr+'</div><div style="font-size:11px;color:var(--text3)">Менеджер: '+c.mgr+'</div></div><button class="btn btn-d btn-sm" onclick="delCo('+i+')">🗑</button></div></div>';}).join('');}
+function addCo(){var n=prompt('Название:');if(!n)return;var ci=prompt('Город:')||'';var a=prompt('Адрес:')||'';var mg=prompt('Email менеджера:')||'';coData.push({name:n,city:ci,addr:a,mgr:mg});localStorage.setItem('pc_cos',JSON.stringify(coData));loadCos();}
+function delCo(i){if(!confirm('Удалить?'))return;coData.splice(i,1);localStorage.setItem('pc_cos',JSON.stringify(coData));loadCos();}
+
+
+// ════════════════════════════════════════════════
+// POINTS OF CONTROL
+// ════════════════════════════════════════════════
+var pointsData = JSON.parse(localStorage.getItem('pc_points') || '[]');
+
+function savePoints() {
+  localStorage.setItem('pc_points', JSON.stringify(pointsData));
+}
+
+function getAppUrl() {
+  return window.location.origin + window.location.pathname;
+}
+
+function makeDeviceId(type, num) {
+  return type + '-' + String(num).padStart(2, '0');
+}
+
+function createPoints() {
+  var type   = document.getElementById('pt-type').value;
+  var from   = parseInt(document.getElementById('pt-from').value) || 1;
+  var to     = parseInt(document.getElementById('pt-to').value) || 10;
+  var co     = document.getElementById('pt-co').value.trim();
+  var loc    = document.getElementById('pt-loc').value.trim();
+  var city   = document.getElementById('pt-city').value.trim();
+  var resp   = document.getElementById('pt-resp').value.trim();
+  var resEl  = document.getElementById('pt-result');
+
+  if (!co) {
+    resEl.style.cssText = 'display:block;padding:10px;background:var(--red-dim);border:1px solid rgba(224,82,82,0.3);border-radius:8px;font-size:13px;color:var(--red)';
+    resEl.textContent = '⚠️ Укажите объект/компанию';
+    return;
+  }
+  if (from > to) {
+    resEl.style.cssText = 'display:block;padding:10px;background:var(--red-dim);border:1px solid rgba(224,82,82,0.3);border-radius:8px;font-size:13px;color:var(--red)';
+    resEl.textContent = '⚠️ Начальный номер должен быть меньше конечного';
+    return;
+  }
+
+  var count = to - from + 1;
+  var appUrl = getAppUrl();
+  var added = 0;
+
+  for (var i = from; i <= to; i++) {
+    var deviceId = makeDeviceId(type, i);
+    // Check for duplicate
+    var exists = pointsData.some(function(p) { return p.id === deviceId && p.company === co; });
+    if (exists) continue;
+
+    var qrUrl = appUrl + '?device=' + encodeURIComponent(deviceId) + '&type=' + encodeURIComponent(type) + '&co=' + encodeURIComponent(co) + '&loc=' + encodeURIComponent(loc || deviceId);
+    pointsData.push({
+      id: deviceId, type: type, num: i,
+      company: co, location: loc ? loc + ' / ' + deviceId : deviceId,
+      city: city, responsible: resp,
+      qrUrl: qrUrl, created: today
+    });
+    added++;
+  }
+
+  savePoints();
+
+  resEl.style.cssText = 'display:block;padding:10px;background:var(--green-dim);border:1px solid var(--border2);border-radius:8px;font-size:13px;color:var(--green)';
+  resEl.innerHTML = '✅ <b>Создано ' + added + ' точек!</b> ' + makeDeviceId(type, from) + ' → ' + makeDeviceId(type, to) +
+    '<br><span style="font-size:11px;color:var(--text2)">QR-коды доступны в разделе "📱 QR-Коды"</span>';
+  setTimeout(function() { resEl.style.display = 'none'; }, 6000);
+
+  renderPoints();
+  updateBadge();
+}
+
+function addSinglePoint() {
+  var type = document.getElementById('sp-type').value;
+  var num  = document.getElementById('sp-num').value.trim();
+  var co   = document.getElementById('sp-co').value.trim();
+  var loc  = document.getElementById('sp-loc').value.trim();
+  var city = document.getElementById('sp-city').value.trim();
+
+  if (!num || !co) { alert('Укажите номер и объект'); return; }
+
+  var deviceId = type + '-' + num.padStart(2, '0');
+  var appUrl = getAppUrl();
+  var qrUrl = appUrl + '?device=' + encodeURIComponent(deviceId) + '&type=' + encodeURIComponent(type) + '&co=' + encodeURIComponent(co) + '&loc=' + encodeURIComponent(loc || deviceId);
+
+  pointsData.push({
+    id: deviceId, type: type, num: parseInt(num)||0,
+    company: co, location: loc || deviceId,
+    city: city, responsible: '',
+    qrUrl: qrUrl, created: today
+  });
+  savePoints();
+
+  document.getElementById('sp-num').value = '';
+  document.getElementById('sp-loc').value = '';
+  renderPoints();
+  alert('Точка ' + deviceId + ' добавлена!');
+}
+
+function deletePoint(idx) {
+  if (!confirm('Удалить точку?')) return;
+  pointsData.splice(idx, 1);
+  savePoints();
+  renderPoints();
+}
+
+function clearAllPoints() {
+  if (!confirm('Удалить ВСЕ точки мониторинга?')) return;
+  pointsData = [];
+  savePoints();
+  renderPoints();
+}
+
+// ── HACCP inspection defaults per trap type ──
+var HACCP_DEFAULTS = {
+  'НР': {
+    label: 'НР — Наружный контейнер',
+    color: 'var(--blue)',
+    fields: [
+      {key:'status',    label:'Состояние',          type:'select', opts:['Исправен','Повреждён','Требует замены','Заменён']},
+      {key:'bait',      label:'Приманка',            type:'select', opts:['Родентицид (блок)','Родентицид (гранулы)','Родентицид (жидкость)','Не заложена']},
+      {key:'drug',      label:'Препарат (средство)', type:'text',   placeholder:'Бродифакум Pro, Ратиндан...'},
+      {key:'eaten',     label:'Съедено (шт)',         type:'number', default:'0'},
+      {key:'replaced',  label:'Замена приманки',     type:'select', opts:['Нет','Дополнена','Полностью заменена']},
+      {key:'rodents',   label:'Грызунов обнаружено', type:'number', default:'0'},
+      {key:'action',    label:'Корректирующие действия (HACCP)', type:'textarea', placeholder:'Описать действия при отклонениях...'}
+    ]
+  },
+  'ВН': {
+    label: 'ВН — Внутренняя живоловка',
+    color: 'var(--purple)',
+    fields: [
+      {key:'status',    label:'Состояние',           type:'select', opts:['Исправна','Повреждена','Требует замены','Заменена']},
+      {key:'bait',      label:'Приманка',             type:'select', opts:['Клеевая подложка','Зерновая приманка','Брикет','Гель','Без приманки']},
+      {key:'drug',      label:'Препарат (средство)',  type:'text',   placeholder:'Клей Catchmaster, Брикет...'},
+      {key:'rodents',   label:'Грызунов поймано',     type:'number', default:'0'},
+      {key:'replaced',  label:'Замена клея/приманки', type:'select', opts:['Нет','Заменена','Очищена и заменена']},
+      {key:'action',    label:'Корректирующие действия (HACCP)', type:'textarea', placeholder:'Описать действия при отклонениях...'}
+    ]
+  },
+  'АВ': {
+    label: 'АВ — Амбарная ловушка',
+    color: 'var(--orange)',
+    fields: [
+      {key:'status',    label:'Состояние',           type:'select', opts:['Исправна','Сработала','Повреждена','Требует замены']},
+      {key:'bait',      label:'Тип ловушки/приманки',type:'select', opts:['Клеевая','Феромонная','Контейнерная','Световая']},
+      {key:'drug',      label:'Препарат/средство',   type:'text',   placeholder:'Феромон Ephestia, Клей...'},
+      {key:'rodents',   label:'Грызунов',             type:'number', default:'0'},
+      {key:'insects',   label:'Насекомых',            type:'number', default:'0'},
+      {key:'replaced',  label:'Замена',               type:'select', opts:['Нет','Приманка заменена','Ловушка заменена']},
+      {key:'action',    label:'Корректирующие действия (HACCP)', type:'textarea', placeholder:'Описать действия при отклонениях...'}
+    ]
+  },
+  'ИЛ': {
+    label: 'ИЛ — Инсектицидная лампа',
+    color: 'var(--green)',
+    fields: [
+      {key:'status',    label:'Состояние',           type:'select', opts:['Исправна','Требует замены','Заменена','Отключена']},
+      {key:'bait',      label:'Тип лампы',            type:'select', opts:['УФ-ловушка (клеевая)','УФ-ловушка (электросетка)','Клеевая без УФ']},
+      {key:'drug',      label:'Клеевой лист/средство',type:'text',   placeholder:'Клей-лист Insect-O-Cutor...'},
+      {key:'insects',   label:'Насекомых поймано',   type:'number', default:'0'},
+      {key:'replaced',  label:'Замена клеевого листа',type:'select', opts:['Нет','Заменён','Очищен']},
+      {key:'lamp_ok',   label:'Лампа УФ исправна',   type:'select', opts:['Да','Нет — требует замены','Заменена']},
+      {key:'action',    label:'Корректирующие действия (HACCP)', type:'textarea', placeholder:'Описать действия при отклонениях...'}
+    ]
+  },
+  'ДЗ': {
+    label: 'ДЗ — Дезинсекция (зона)',
+    color: 'var(--orange)',
+    fields: [
+      {key:'status',    label:'Статус обработки',    type:'select', opts:['Плановая обработка','Внеплановая (вспышка)','Профилактика','Обработка не требуется']},
+      {key:'bait',      label:'Метод обработки',     type:'select', opts:['Опрыскивание','Гелевые приманки','Горячий туман','Холодный туман','Точечная обработка','Фумигация']},
+      {key:'drug',      label:'Препарат/средство',   type:'text',   placeholder:'Сайпермекс 25, K-Othrine...'},
+      {key:'insects',   label:'Насекомых выявлено',  type:'number', default:'0'},
+      {key:'conc',      label:'Концентрация',         type:'text',   placeholder:'0.05%, 1:200...'},
+      {key:'volume',    label:'Объём (л)',             type:'number', default:'0'},
+      {key:'action',    label:'Корректирующие действия (HACCP)', type:'textarea', placeholder:'Описать действия при отклонениях...'}
+    ]
+  },
+  'ПТ': {
+    label: 'ПТ — Защита от птиц',
+    color: 'var(--purple)',
+    fields: [
+      {key:'status',    label:'Состояние оборудования',type:'select',opts:['Исправно','Частично повреждено','Требует замены','Заменено / установлено новое']},
+      {key:'bait',      label:'Тип оборудования',     type:'select', opts:['Шипы антиприсадочные','Сетка защитная','Электроотпугиватель','Акустический отпугиватель','Гель репеллент','Натяжной трос']},
+      {key:'drug',      label:'Средство/материал',    type:'text',   placeholder:'Bird-X Gel, Avishock...'},
+      {key:'eff',       label:'Эффективность',        type:'select', opts:['Высокая','Средняя','Низкая','Не оценена']},
+      {key:'birds',     label:'Вид птиц',              type:'select', opts:['Голубь','Ворона','Воробей','Скворец','Другие']},
+      {key:'action',    label:'Корректирующие действия (HACCP)', type:'textarea', placeholder:'Описать действия при отклонениях...'}
+    ]
+  }
+};
+
+function getHaccpStatus(p) {
+  var ins = p.inspection_data || {};
+  var type = p.type;
+  var warnings = [];
+  if (type==='НР' || type==='ВН' || type==='АВ') {
+    if (parseInt(ins.rodents||0) > 0) warnings.push('⚠️ Грызунов: '+ins.rodents);
+  }
+  if (type==='АВ' || type==='ИЛ' || type==='ДЗ') {
+    if (parseInt(ins.insects||0) > 5) warnings.push('⚠️ Насекомых: '+ins.insects);
+  }
+  if (ins.status && (ins.status.includes('Повреждён') || ins.status.includes('Требует замены'))) {
+    warnings.push('⚠️ '+ins.status);
+  }
+  if (!p.last_inspected) return {cls:'br', text:'Не осмотрен'};
+  if (warnings.length) return {cls:'bo', text: warnings[0]};
+  return {cls:'bg', text:'✓ HACCP OK'};
+}
+
+function renderInspectionPanel(idx) {
+  var p = pointsData[idx];
+  if (!p) return;
+  var def = HACCP_DEFAULTS[p.type];
+  if (!def) return;
+  var ins = p.inspection_data || {};
+
+  // Toggle off if already open
+  var existingRow = document.getElementById('insp-row-'+idx);
+  if (existingRow) { existingRow.remove(); return; }
+
+  var fieldsHtml = def.fields.map(function(f) {
+    if (f.key === 'action') return ''; // rendered separately below
+    var val = ins[f.key] !== undefined ? ins[f.key] : (f.default || '');
+    var input = '';
+    if (f.type === 'select') {
+      input = '<select class="insp-field" data-key="'+f.key+'" data-idx="'+idx+'" onchange="saveInspField(this)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none">' +
+        f.opts.map(function(o){ return '<option value="'+o+'"'+(val===o?' selected':'')+'>'+o+'</option>'; }).join('') +
+        '</select>';
+    } else {
+      input = '<input type="'+(f.type||'text')+'" class="insp-field" data-key="'+f.key+'" data-idx="'+idx+'" value="'+val+'" placeholder="'+(f.placeholder||'')+'" onchange="saveInspField(this)" onblur="saveInspField(this)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none">';
+    }
+    return '<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;font-weight:600;text-transform:uppercase">'+f.label+'</div>'+input+'</div>';
+  }).join('');
+
+  // Action / comment field always shown prominently
+  var actionVal = ins['action'] || '';
+  var actionHtml =
+    '<div style="margin-top:10px">' +
+      '<div style="font-size:10px;color:var(--orange);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">📌 Корректирующие действия / Комментарий</div>' +
+      '<textarea class="insp-field" data-key="action" data-idx="'+idx+'" onchange="saveInspField(this)" onblur="saveInspField(this)" placeholder="Опишите отклонения и принятые меры..." style="width:100%;background:var(--bg);border:1px solid rgba(224,140,58,0.4);border-radius:6px;padding:8px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;resize:vertical;min-height:70px">'+actionVal+'</textarea>' +
+    '</div>';
+
+  var lastDate = p.last_inspected
+    ? '<span style="font-size:11px;color:var(--text3)">Последний осмотр: '+p.last_inspected+'</span>'
+    : '<span style="font-size:11px;color:var(--red)">Осмотр не проводился</span>';
+  var haccpBadge = actionVal
+    ? '<span style="font-size:10px;background:var(--orange-dim);color:var(--orange);border:1px solid rgba(224,140,58,0.3);padding:2px 8px;border-radius:20px;font-weight:600">⚠️ Корр. действия</span>'
+    : '';
+
+  var html =
+    '<tr id="insp-row-'+idx+'"><td colspan="9" style="padding:0">' +
+    '<div style="background:var(--bg2);border-top:2px solid '+def.color+';border-bottom:1px solid var(--border);padding:16px 18px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+          '<span style="font-size:13px;font-weight:700;color:'+def.color+'">📋 '+p.id+' — '+def.label+'</span>' +
+          lastDate + haccpBadge +
+        '</div>' +
+        '<button onclick="document.getElementById('insp-row-'+idx+'').remove()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:13px;cursor:pointer;color:var(--text2)">✕</button>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">' +
+        fieldsHtml +
+      '</div>' +
+      actionHtml +
+      '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-sm" style="background:var(--green);color:#0f1410;font-weight:700" onclick="saveInspectionOnly('+idx+')">💾 Сохранить осмотр</button>' +
+        '<button class="btn btn-sm" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2)" onclick="document.getElementById('insp-row-'+idx+'').remove()">Закрыть</button>' +
+      '</div>' +
+      '<div style="margin-top:10px;padding:8px 10px;background:rgba(74,182,96,0.05);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text3)">' +
+        '⚖️ <b style="color:var(--green)">HACCP:</b> Данные сохраняются в историю точки. Подписи сторон и печать акта — после завершения полного обхода (кнопка «📋 Новый обход»).' +
+      '</div>' +
+    '</div></td></tr>';
+
+  var mainRow = document.getElementById('pt-row-'+idx);
+  if (mainRow) mainRow.insertAdjacentHTML('afterend', html);
+}
+
+function saveInspField(el) {
+  var idx = parseInt(el.getAttribute('data-idx'));
+  var key = el.getAttribute('data-key');
+  if (!pointsData[idx]) return;
+  if (!pointsData[idx].inspection_data) pointsData[idx].inspection_data = {};
+  pointsData[idx].inspection_data[key] = el.value;
+  savePoints();
+}
+
+// markInspected: see HISTORY section below
+
+function closeInspPanel(idx) {
+  var row = document.getElementById('insp-row-'+idx);
+  if (row) row.remove();
+}
+
+function renderPoints() {
+  var search    = (document.getElementById('pt-search').value || '').toLowerCase();
+  var typeFilter = document.getElementById('pt-filter-type').value;
+  var coFilter  = (document.getElementById('pt-filter-co').value || '').toLowerCase();
+
+  var filtered = pointsData.filter(function(p) {
+    if (typeFilter && p.type !== typeFilter) return false;
+    if (coFilter && !(p.company || '').toLowerCase().includes(coFilter)) return false;
+    if (search && !(p.id + p.company + p.location + p.city).toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  document.getElementById('pt-count').textContent = filtered.length + ' точек';
+  var el = document.getElementById('points-table');
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty">📭 Нет точек мониторинга.<br>Создайте точки с помощью формы выше.</div>';
+    return;
+  }
+
+  var typeColors = {'НР':'bb','ВН':'bp','АВ':'bo','ИЛ':'bg','ДЗ':'bo','ПТ':'bp'};
+  var typeIcons  = {'НР':'📦','ВН':'🟨','АВ':'🪤','ИЛ':'💡','ДЗ':'🦟','ПТ':'🦅'};
+
+  var rows = filtered.map(function(p) {
+    var realIdx = -1;
+    for(var i=0;i<pointsData.length;i++){
+      if(pointsData[i].id===p.id && pointsData[i].company===p.company){realIdx=i;break;}
+    }
+    var hs = getHaccpStatus(p);
+    var lastInsp = p.last_inspected
+      ? '<span style="font-size:10px;color:var(--text3)">'+p.last_inspected+'</span>'
+      : '<span style="font-size:10px;color:var(--red)">—</span>';
+    return '<tr id="pt-row-'+realIdx+'">' +
+      '<td style="font-weight:700;font-size:12px">' + (typeIcons[p.type]||'') + ' ' + p.id + '</td>' +
+      '<td><span class="badge ' + (typeColors[p.type]||'bg') + '">' + p.type + '</span></td>' +
+      '<td style="font-size:12px">' + p.company + '</td>' +
+      '<td style="font-size:11px;color:var(--text2)">' + (p.location || '—') + '</td>' +
+      '<td style="font-size:11px;color:var(--text2)">' + (p.city || '—') + '</td>' +
+      '<td>' + lastInsp + '</td>' +
+      '<td><span class="badge ' + hs.cls + '">' + hs.text + '</span></td>' +
+      '<td style="white-space:nowrap">' +
+        '<button class="btn btn-sm" style="background:rgba(74,157,224,0.15);color:var(--blue);border:1px solid rgba(74,157,224,0.3);margin-right:4px" onclick="openHistoryModal(pointsData[' + realIdx + '].id,pointsData[' + realIdx + '].company)" title="История мониторинга">📂</button>' +
+        '<button class="btn btn-sm" style="background:var(--green-dim);color:var(--green);border:1px solid var(--border2);margin-right:4px" onclick="renderInspectionPanel(' + realIdx + ')">📋 Осмотр</button>' +
+        '<button class="btn btn-b btn-sm" data-idx="' + realIdx + '" onclick="openQR(this)" style="margin-right:4px">📱 QR</button>' +
+        '<button class="btn btn-d btn-sm" onclick="deletePoint(' + realIdx + ')">🗑</button>' +
+      '</td>' +
+      '</tr>';
+  }).join('');
+
+  el.innerHTML = '<table><thead><tr>' +
+    '<th>ID</th><th>Тип</th><th>Объект</th><th>Место</th><th>Город</th>' +
+    '<th>Осмотр</th><th>HACCP статус</th><th>Действия</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function openQR(btn) {
+  var idx = parseInt(btn.getAttribute('data-idx'));
+  var p = pointsData[idx];
+  if (!p) return;
+  showSingleQR(p.qrUrl, p.id);
+}
+
+
+function showSingleQR(qrUrl, deviceId) {
+  var win = window.open('', '_blank', 'width=350,height=450');
+  var safeUrl = qrUrl.replace(/&/g,'&amp;');
+  var html = [
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR ' + deviceId + '</title>',
+    '<style>body{font-family:Arial;text-align:center;padding:20px;background:#fff}',
+    'h2{color:#1B5E20;margin-bottom:10px}p{font-size:12px;color:#666;margin-bottom:20px}',
+    '.url{font-size:9px;color:#999;word-break:break-all;margin-top:10px}</style></head><body>',
+    '<h2>🐛 ' + deviceId + '</h2>',
+    '<p>Сканируйте для ввода данных</p>',
+    '<div id="qrc"></div>',
+    '<div class="url">' + safeUrl + '</div>'
+  ].join('');
+  win.document.write(html);
+  win.document.close();
+  // Load QR after document is ready
+  var script1 = win.document.createElement('script');
+  script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  script1.onload = function() {
+    new win.QRCode(win.document.getElementById('qrc'), {
+      text: qrUrl, width: 200, height: 200,
+      colorDark: '#000000', colorLight: '#ffffff',
+      correctLevel: win.QRCode.CorrectLevel.M
+    });
+    var btn = win.document.createElement('button');
+    btn.textContent = '🖨 Печать';
+    btn.style.cssText = 'margin-top:15px;background:#1B5E20;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px';
+    btn.onclick = function() { win.print(); };
+    win.document.body.appendChild(btn);
+  };
+  win.document.head.appendChild(script1);
+}
+
+function printPoints() {
+  var filtered = pointsData;
+  var rows = filtered.map(function(p, i) {
+    return '<tr style="background:' + (i%2===0?'#f8f8f8':'#fff') + '"><td>' + p.id + '</td><td>' + p.type + '</td><td>' + p.company + '</td><td>' + (p.location||'—') + '</td><td>' + (p.city||'—') + '</td><td>' + (p.created||'—') + '</td></tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Точки мониторинга</title>' +
+    '<style>@page{size:A4;margin:14mm}body{font-family:Arial;font-size:10pt}h1{font-size:14pt;color:#1B5E20}' +
+    'table{width:100%;border-collapse:collapse;font-size:9pt}th{background:#1B5E20;color:white;padding:4pt}td{padding:4pt;border-bottom:1px solid #eee}</style></head><body>' +
+    '<h1>📍 Точки мониторинга Pest Control</h1><p>Дата: ' + today + ' | Всего: ' + filtered.length + '</p>' +
+    '<table><tr><th>ID</th><th>Тип</th><th>Объект</th><th>Место</th><th>Город</th><th>Создан</th></tr>' + rows + '</table></body></html>';
+  var w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.focus(); setTimeout(function(){w.print();}, 400);
+}
+
+// ════════════════════════════════════════════════
+// QR CODES PAGE
+// ════════════════════════════════════════════════
+var qrInstances = {};
+
+function renderQRPage() {
+  var typeFilter = document.getElementById('qr-filter-type').value;
+  var coFilter   = (document.getElementById('qr-filter-co').value || '').toLowerCase();
+
+  var filtered = pointsData.filter(function(p) {
+    if (typeFilter && p.type !== typeFilter) return false;
+    if (coFilter && !(p.company || '').toLowerCase().includes(coFilter)) return false;
+    return true;
+  });
+
+  document.getElementById('qr-total-label').textContent = filtered.length + ' QR-кодов';
+  var grid = document.getElementById('qr-grid');
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1" class="empty">📱 Нет точек мониторинга.<br>Создайте точки в разделе "📍 Точки мониторинга"</div>';
+    return;
+  }
+
+  var typeColors = {'НР':'#4a9de0','ВН':'#9b6de0','АВ':'#e08c3a','ИЛ':'#4ab660','ДЗ':'#e08c3a','ПТ':'#9b6de0'};
+
+  grid.innerHTML = filtered.map(function(p, i) {
+    var col = typeColors[p.type] || 'var(--green)';
+    return '<div class="form-card" style="text-align:center;padding:16px;cursor:pointer" onclick="openHistoryModal(\''+p.id+'\',\''+p.company+'\')" title="История мониторинга">' +
+      '<div style="font-size:10px;color:var(--text3);margin-bottom:4px">' + (p.company || '') + '</div>' +
+      '<div style="font-size:16px;font-weight:700;color:' + col + ';margin-bottom:2px">' + p.id + '</div>' +
+      '<div style="font-size:10px;color:var(--text2);margin-bottom:12px">' + (p.location || '') + '</div>' +
+      '<div id="qr-div-' + i + '" style="display:flex;justify-content:center;margin-bottom:10px;background:#fff;padding:8px;border-radius:8px"></div>' +
+      '<div style="display:flex;gap:6px;justify-content:center">' +
+      '<button class="btn btn-b btn-sm" data-qr-idx="' + i + '" onclick="openQRFromGrid(this)">🖨 Печать</button>' +
+      '</div></div>';
+  }).join('');
+
+  // Store filtered for QR access
+  window._qrFiltered = filtered;
+
+  setTimeout(function() {
+    filtered.forEach(function(p, i) {
+      var el = document.getElementById('qr-div-' + i);
+      if (el && el.innerHTML === '' && window.QRCode) {
+        try {
+          new QRCode(el, {
+            text: p.qrUrl, width: 130, height: 130,
+            colorDark: '#000000', colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        } catch(e) {
+          el.innerHTML = '<div style="font-size:9px;color:#666;word-break:break-all;padding:4px;max-width:180px">' + p.qrUrl + '</div>';
+        }
+      }
+    });
+  }, 200);
+}
+
+function openQRFromGrid(btn) {
+  var idx = parseInt(btn.getAttribute('data-qr-idx'));
+  var filtered = window._qrFiltered || [];
+  var p = filtered[idx];
+  if (p) showSingleQR(p.qrUrl, p.id);
+}
+
+
+function printAllQR() {
+  var typeFilter = document.getElementById('qr-filter-type').value;
+  var coFilter   = (document.getElementById('qr-filter-co').value || '').toLowerCase();
+  var filtered = pointsData.filter(function(p) {
+    if (typeFilter && p.type !== typeFilter) return false;
+    if (coFilter && !(p.company||'').toLowerCase().includes(coFilter)) return false;
+    return true;
+  });
+
+  if (!filtered.length) { alert('Нет точек для печати'); return; }
+
+  var typeColors = {'НР':'#1565C0','ВН':'#6A1B9A','АВ':'#E65100','ИЛ':'#1B5E20','ДЗ':'#E65100','ПТ':'#6A1B9A'};
+  var pointsJson = JSON.stringify(filtered);
+
+  var cards = filtered.map(function(p) {
+    var col = typeColors[p.type] || '#1B5E20';
+    var safeId = p.id.replace(/[^a-zA-Z0-9]/g, '_');
+    return '<div style="display:inline-block;width:85mm;border:1px solid #ccc;border-radius:4mm;' +
+      'padding:4mm;margin:2mm;text-align:center;vertical-align:top;break-inside:avoid">' +
+      '<div style="font-size:7pt;color:#666">' + p.company + '</div>' +
+      '<div style="font-size:14pt;font-weight:bold;color:' + col + ';margin:1mm 0">' + p.id + '</div>' +
+      '<div style="font-size:7pt;color:#888;margin-bottom:3mm">' + (p.location||'') + '</div>' +
+      '<div id="qr_' + safeId + '" style="display:flex;justify-content:center;background:#fff;padding:4px"></div>' +
+      '<div style="font-size:6pt;color:#bbb;margin-top:2mm">Pest Control | ' + today + '</div>' +
+      '</div>';
+  }).join('');
+
+  var w = window.open('', '_blank', 'width=900,height=700');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
+  w.document.write('<style>@page{size:A4;margin:8mm}body{font-family:Arial}.grid{display:flex;flex-wrap:wrap}</style>');
+  w.document.write('</head><body>');
+  w.document.write('<h2 style="color:#1B5E20;font-size:12pt;margin-bottom:4mm">Pest Control — QR-коды | ' + today + ' | ' + filtered.length + ' точек</h2>');
+  w.document.write('<div class="grid">' + cards + '</div>');
+  w.document.close();
+
+  // Load QR lib and generate codes
+  var script = w.document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  script.onload = function() {
+    filtered.forEach(function(p) {
+      var safeId = p.id.replace(/[^a-zA-Z0-9]/g, '_');
+      var el = w.document.getElementById('qr_' + safeId);
+      if (el && p.qrUrl) {
+        try {
+          new w.QRCode(el, {text: p.qrUrl, width: 110, height: 110, colorDark: '#000', colorLight: '#fff', correctLevel: w.QRCode.CorrectLevel.M});
+        } catch(e) {
+          el.style.cssText = 'font-size:7px;color:#666;word-break:break-all;padding:4px;max-width:85mm';
+          el.textContent = p.qrUrl;
+        }
+      }
+    });
+    setTimeout(function() { w.focus(); w.print(); }, 1500);
+  };
+  w.document.head.appendChild(script);
+}
+
+
+// Check URL params on load (QR scan auto-fill)
+function checkQRScan() {
+  var params = new URLSearchParams(window.location.search);
+  var device = params.get('device');
+  var type   = params.get('type');
+  var co     = params.get('co');
+  var loc    = params.get('loc');
+  if (!device || !type) return;
+
+  // Navigate to inspection and pre-fill
+  setTimeout(function() {
+    var navBtn = document.querySelector('.nav-item');
+    showPage('points', navBtn);
+
+    // Map type to direction
+    var dirMap = {'НР':'derat','ВН':'derat','АВ':'derat','ИЛ':'derat','ДЗ':'disins','ПТ':'birds'};
+    var dir = dirMap[type] || 'derat';
+    var dirBtn = document.querySelector('.dir-tab.' + dir);
+    showDir(dir, dirBtn);
+
+    // Fill company
+    var coEl = document.getElementById(dir==='derat'?'dd-co':dir==='disins'?'di-co':'bi-co');
+    if (coEl && co) coEl.value = decodeURIComponent(co);
+
+    // Show notification
+    var notice = document.createElement('div');
+    notice.style.cssText = 'position:fixed;top:20px;right:20px;z-index:999;background:var(--green);color:#0f1410;padding:12px 20px;border-radius:10px;font-weight:700;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+    notice.textContent = '📱 QR отсканирован: ' + device;
+    document.body.appendChild(notice);
+    setTimeout(function() { notice.remove(); }, 4000);
+  }, 500);
+}
+
+
+// ════════════════════════════════════════════════
+// AUTO-LOAD POINTS INTO INSPECTION FORM
+// ════════════════════════════════════════════════
+function getPointsByType(type) {
+  return pointsData.filter(function(p) { return p.type === type; });
+}
+
+function populateDератRows() {
+  // Auto-populate НР rows from pointsData
+  var nrPts = getPointsByType('НР');
+  if (nrPts.length > 0) {
+    var container = document.getElementById('dd-nr-rows');
+    container.innerHTML = '';
+    nrPts.forEach(function(p) {
+      var row = document.createElement('div');
+      row.className = 'form-row dd-nr-row';
+      row.innerHTML = '<div class="form-group"><label>№ НР <span class="rs">*</span></label><input type="text" value="' + p.id + '" class="nr-id"></div>' +
+        '<div class="form-group"><label>МЕСТО <span class="rs">*</span></label><select class="nr-loc"><option>Периметр Север</option><option>Периметр Юг</option><option>Периметр Восток</option><option>Периметр Запад</option><option>Забор периметра здания</option><option>Угол здания</option><option>Главный вход</option><option>Задний вход</option><option>Парковка</option><option>Другое</option></select></div>' +
+        '<div class="form-group"><label>ПРИМАНКА</label><select class="nr-bait"><option>Родентицид (блок)</option><option>Родентицид (гранулы)</option><option>Родентицид (жидкость)</option></select></div>' +
+        '<div class="form-group"><label>НАЗВАНИЕ ПРЕПАРАТА</label><input type="text" placeholder="Бродифакум Pro" class="nr-drug"></div>' +
+        '<div class="form-group"><label>СЪЕДЕНО (шт) <span class="rs">*</span></label><input type="number" min="0" value="0" class="nr-eaten"></div>' +
+        '<div class="form-group"><label>СОСТОЯНИЕ</label><select class="nr-status"><option>Исправен</option><option>Повреждён</option><option>Требует замены</option></select></div>' +
+        '<div class="form-group"><label>ЗАМЕНА</label><select class="nr-rep"><option>Нет</option><option>Дополнена</option><option>Заменена</option></select></div>' +
+        '<div class="form-group" style="grid-column:1/-1"><label>КОРРЕКТИРУЮЩИЕ ДЕЙСТВИЯ</label><input type="text" placeholder="Комментарий техника..." class="nr-action"></div>';
+      container.appendChild(row);
+    });
+  }
+  var vnPts = getPointsByType('ВН');
+  if (vnPts.length > 0) {
+    var vcontainer = document.getElementById('dd-vn-rows');
+    vcontainer.innerHTML = '';
+    vnPts.forEach(function(p) {
+      var row = document.createElement('div');
+      row.className = 'form-row dd-vn-row';
+      row.innerHTML = '<div class="form-group"><label>№ ВН <span class="rs">*</span></label><input type="text" value="' + p.id + '" class="vn-id"></div>' +
+        '<div class="form-group"><label>МЕСТО <span class="rs">*</span></label><input type="text" value="' + (p.location||'Внутри') + '" class="vn-loc"></div>' +
+        '<div class="form-group"><label>ГРЫЗУНОВ <span class="rs">*</span></label><input type="number" min="0" value="0" class="vn-rod"></div>' +
+        '<div class="form-group"><label>ПРИМАНКА</label><select class="vn-glue"><option>Клеевая подложка</option><option>Зерновая приманка</option><option>Брикет</option><option>Гель</option><option>Без приманки</option></select></div>' +
+        '<div class="form-group"><label>СОСТОЯНИЕ</label><select class="vn-status"><option>Исправна</option><option>Повреждена</option><option>Требует замены</option></select></div>' +
+        '<div class="form-group"><label>ЗАМЕНА КЛЕЯ</label><select class="vn-rep"><option>Нет</option><option>Да</option></select></div>' +
+        '<div class="form-group" style="grid-column:1/-1"><label>КОРРЕКТИРУЮЩИЕ ДЕЙСТВИЯ</label><input type="text" placeholder="Комментарий техника..." class="vn-action"></div>';
+      vcontainer.appendChild(row);
+    });
+  }
+  var avPts = getPointsByType('АВ');
+  if (avPts.length > 0) {
+    var acontainer = document.getElementById('dd-av-rows');
+    acontainer.innerHTML = '';
+    avPts.forEach(function(p) {
+      var row = document.createElement('div');
+      row.className = 'form-row dd-av-row';
+      row.innerHTML = '<div class="form-group"><label>№ АВ <span class="rs">*</span></label><input type="text" value="' + p.id + '" class="av-id"></div>' +
+        '<div class="form-group"><label>МЕСТО <span class="rs">*</span></label><input type="text" value="' + (p.location||'Склад') + '" class="av-loc"></div>' +
+        '<div class="form-group"><label>ТИП</label><select class="av-type"><option>Клеевая</option><option>Феромонная</option><option>Контейнерная</option></select></div>' +
+        '<div class="form-group"><label>ГРЫЗУНОВ <span class="rs">*</span></label><input type="number" min="0" value="0" class="av-rod"></div>' +
+        '<div class="form-group"><label>НАСЕКОМЫХ</label><input type="number" min="0" value="0" class="av-ins"></div>' +
+        '<div class="form-group"><label>СОСТОЯНИЕ</label><select class="av-status"><option>Исправна</option><option>Сработала</option><option>Повреждена</option></select></div>' +
+        '<div class="form-group" style="grid-column:1/-1"><label>КОРРЕКТИРУЮЩИЕ ДЕЙСТВИЯ</label><input type="text" placeholder="Комментарий техника..." class="av-action"></div>';
+      acontainer.appendChild(row);
+    });
+  }
+  var ilPts = getPointsByType('ИЛ');
+  if (ilPts.length > 0) {
+    var icontainer = document.getElementById('dd-il-rows');
+    icontainer.innerHTML = '';
+    ilPts.forEach(function(p) {
+      var row = document.createElement('div');
+      row.className = 'form-row dd-il-row';
+      row.innerHTML = '<div class="form-group"><label>№ ИЛ <span class="rs">*</span></label><input type="text" value="' + p.id + '" class="il-id"></div>' +
+        '<div class="form-group"><label>МЕСТО <span class="rs">*</span></label><input type="text" value="' + (p.location||'Вход') + '" class="il-loc"></div>' +
+        '<div class="form-group"><label>ТИП</label><select class="il-type"><option>УФ-ловушка</option><option>Клеевая</option><option>Электросетка</option></select></div>' +
+        '<div class="form-group"><label>НАСЕКОМЫХ <span class="rs">*</span></label><input type="number" min="0" value="0" class="il-ins"></div>' +
+        '<div class="form-group"><label>СОСТОЯНИЕ</label><select class="il-status"><option>Исправна</option><option>Требует замены</option><option>Заменена</option></select></div>' +
+        '<div class="form-group"><label>ЗАМЕНА КЛЕЯ</label><select class="il-rep"><option>Нет</option><option>Да</option></select></div>' +
+        '<div class="form-group" style="grid-column:1/-1"><label>КОРРЕКТИРУЮЩИЕ ДЕЙСТВИЯ</label><input type="text" placeholder="Комментарий техника..." class="il-action"></div>';
+      icontainer.appendChild(row);
+    });
+  }
+}
+
+function populateDisinsRows() {
+  var ilPts = getPointsByType('ИЛ').concat(getPointsByType('ДЗ'));
+  if (ilPts.length > 0) {
+    var container = document.getElementById('di-il-rows');
+    container.innerHTML = '';
+    ilPts.forEach(function(p) {
+      var row = document.createElement('div');
+      row.className = 'form-row di-il-row';
+      row.innerHTML = '<div class="form-group"><label>№ ИЛ</label><input type="text" value="' + p.id + '" class="dil-id"></div>' +
+        '<div class="form-group"><label>МЕСТО</label><input type="text" value="' + (p.location||'Вход') + '" class="dil-loc"></div>' +
+        '<div class="form-group"><label>НАСЕКОМЫХ <span class="rs">*</span></label><input type="number" min="0" value="0" class="dil-ins"></div>' +
+        '<div class="form-group"><label>СОСТОЯНИЕ</label><select class="dil-status"><option>Исправна</option><option>Требует замены</option><option>Заменена</option></select></div>' +
+        '<div class="form-group"><label>ЗАМЕНА КЛЕЯ</label><select class="dil-rep"><option>Нет</option><option>Да</option></select></div>';
+      container.appendChild(row);
+    });
+  }
+}
+
+function populateBirdsRows() {
+  var ptPts = getPointsByType('ПТ');
+  if (ptPts.length > 0) {
+    var container = document.getElementById('bi-eq-rows');
+    container.innerHTML = '';
+    ptPts.forEach(function(p) {
+      var row = document.createElement('div');
+      row.className = 'form-row bi-eq-row';
+      row.innerHTML = '<div class="form-group"><label>УЧАСТОК <span class="rs">*</span></label><input type="text" value="' + (p.location||'Периметр') + '" class="b-zone"></div>' +
+        '<div class="form-group"><label>ВИД ПТИЦ</label><select class="b-bird"><option>Голубь</option><option>Ворона</option><option>Воробей</option><option>Скворец</option><option>Другие</option></select></div>' +
+        '<div class="form-group"><label>ОБОРУДОВАНИЕ <span class="rs">*</span></label><select class="b-equip"><option>Шипы антиприсадочные</option><option>Сетка защитная</option><option>Электроотпугиватель</option><option>Акустический отпугиватель</option><option>Оптический отпугиватель</option><option>Гель репеллент</option></select></div>' +
+        '<div class="form-group"><label>КОЛ-ВО/МЕТРАЖ</label><input type="text" value="' + (p.location||'') + '" class="b-qty"></div>' +
+        '<div class="form-group"><label>СОСТОЯНИЕ</label><select class="b-cond"><option>Установлено новое</option><option>Проверено — исправно</option><option>Требует замены</option><option>Заменено</option></select></div>' +
+        '<div class="form-group"><label>ЭФФЕКТИВНОСТЬ</label><select class="b-eff"><option>Высокая</option><option>Средняя</option><option>Низкая</option><option>Не оценена</option></select></div>';
+      container.appendChild(row);
+    });
+  }
+}
+
+
+// SETTINGS
+async function saveProfile(){var n=document.getElementById('set-name').value,co=document.getElementById('set-co').value,ci=document.getElementById('set-city').value;await sb.auth.updateUser({data:{name:n,company:co,city:ci}});if(CP){CP.name=n;CP.company=co;CP.city=ci;}document.getElementById('u-name').textContent=n;document.getElementById('sb-co').textContent=co;alert('Сохранено!');}
+async function changePass(){var np=document.getElementById('np').value,cp2=document.getElementById('cp').value;if(np!==cp2){alert('Пароли не совпадают');return;}if(np.length<6){alert('Минимум 6 символов');return;}var r=await sb.auth.updateUser({password:np});if(r.error){alert(r.error.message);return;}alert('Пароль изменён!');}
+
+
+// ════════════════════════════════════════════════
+// REPORTS CUSTOM PERIOD + HACCP
+// ════════════════════════════════════════════════
+function toggleRepCustom() {
+  var period = document.getElementById('rp').value;
+  var show = period === 'custom';
+  document.getElementById('rp-from').style.display = show ? 'block' : 'none';
+  document.getElementById('rp-to').style.display = show ? 'block' : 'none';
+  renderReports();
+}
+
+function getPDReport(period) {
+  if (period === 'custom') {
+    var f = document.getElementById('rp-from');
+    var t = document.getElementById('rp-to');
+    return [f && f.value ? f.value : today, t && t.value ? t.value : today];
+  }
+  return getPD(period);
+}
+
+async function printHACCP() {
+  var period = document.getElementById('rp') ? document.getElementById('rp').value : 'month';
+  var dates = getPDReport(period);
+  var acts = await getActs({from:dates[0], to:dates[1]});
+  var p = CP || {};
+  var nrT=0,nrE=0,vnT=0,vnR=0,avT=0,avR=0,ilT=0,ilI=0;
+  acts.forEach(function(a){try{var d=JSON.parse(a.act_data||'{}');
+    if(d.nr){nrT+=d.nr.length;d.nr.forEach(function(r){nrE+=Number(r.eaten||0);});}
+    if(d.vn){vnT+=d.vn.length;d.vn.forEach(function(r){vnR+=Number(r.rod||0);});}
+    if(d.av){avT+=d.av.length;d.av.forEach(function(r){avR+=Number(r.rod||0);});}
+    if(d.il){ilT+=d.il.length;d.il.forEach(function(r){ilI+=Number(r.ins||0);});}
+    if(d.dil){d.dil.forEach(function(r){ilI+=Number(r.ins||0);});}
+  }catch(e){}});
+  var nrEff=nrT>0?Math.min(100,100-Math.round(nrE/Math.max(nrT*150,1)*100)):0;
+  var vnEff=vnR===0?100:Math.max(0,100-vnR*15);
+  var avEff=avR===0?100:Math.max(0,100-avR*15);
+  var ilEff=ilT>0?Math.min(100,100-Math.round(ilI/Math.max(ilT*20,1)*100)):0;
+  var ov=Math.round((nrEff+vnEff+avEff+ilEff)/4);
+  var rows=acts.slice(0,50).map(function(a,i){
+    var dn={deratization:'Дератизация',disinsection:'Дезинсекция',birds:'Птицы'};
+    return '<tr style="background:'+(i%2===0?'#f8f8f8':'#fff')+'"><td>'+a.date+'</td><td>'+dn[a.direction]+'</td><td>'+a.client_company+'</td><td>'+a.branch+'</td><td>'+a.technician+'</td><td>'+(a.client_sig?'✓':'—')+'</td></tr>';
+  }).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>HACCP</title>'+
+  '<style>@page{size:A4;margin:15mm}body{font-family:Arial;font-size:10pt;color:#222;line-height:1.5}'+
+  'h1{font-size:13pt;color:#1B5E20;border-bottom:2px solid #1B5E20;padding-bottom:4pt}'+
+  'h2{font-size:11pt;color:#2E7D32;margin:12pt 0 4pt;border-left:3px solid #4ab660;padding-left:6pt}'+
+  'h3{font-size:10pt;color:#388E3C;margin:8pt 0 3pt}'+
+  '.meta{background:#f1f8e9;border:1px solid #c8e6c9;border-radius:4pt;padding:8pt;margin-bottom:10pt;font-size:9pt}'+
+  '.krow{display:flex;gap:6pt;margin-bottom:10pt}'+
+  '.kbox{flex:1;background:#f9f9f9;border:1px solid #ddd;border-radius:3pt;padding:6pt;text-align:center}'+
+  '.kl{font-size:7pt;color:#666}.kv{font-size:15pt;font-weight:bold}'+
+  '.g{color:#1B5E20}.o{color:#E65100}.r{color:#c62828}'+
+  '.warn{background:#fff3e0;border:1px solid #ffcc02;border-radius:3pt;padding:6pt;margin:6pt 0;font-size:9pt}'+
+  '.ok{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:3pt;padding:6pt;margin:6pt 0;font-size:9pt}'+
+  'table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:10pt}'+
+  'th{background:#1B5E20;color:white;padding:4pt;text-align:left}td{padding:4pt;border-bottom:1px solid #eee}'+
+  '.foot{position:fixed;bottom:0;left:0;right:0;font-size:7pt;color:#999;text-align:center;border-top:1px solid #ddd;padding:3pt}'+
+  '</style></head><body>'+
+  '<h1>ОТЧЁТ МОНИТОРИНГА ВРЕДИТЕЛЕЙ — СТАНДАРТ HACCP</h1>'+
+  '<div class="meta"><b>Организация:</b> '+(p.company||'—')+'<br>'+
+  '<b>Ответственный:</b> '+(p.name||'—')+' | <b>Период:</b> '+dates[0]+' — '+dates[1]+'<br>'+
+  '<b>Дата составления:</b> '+today+' | <b>Актов осмотра:</b> '+acts.length+'</div>'+
+  '<h2>1. KPI — КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ ЭФФЕКТИВНОСТИ</h2>'+
+  '<div class="krow">'+
+  '<div class="kbox"><div class="kl">НР Периметр</div><div class="kv '+(nrEff>60?'g':'o')+'">'+nrEff+'%</div></div>'+
+  '<div class="kbox"><div class="kl">ВН Внутренние</div><div class="kv '+(vnEff>70?'g':'r')+'">'+vnEff+'%</div></div>'+
+  '<div class="kbox"><div class="kl">АВ Амбарные</div><div class="kv '+(avEff>70?'g':'r')+'">'+avEff+'%</div></div>'+
+  '<div class="kbox"><div class="kl">ИЛ Лампы</div><div class="kv '+(ilEff>60?'g':'o')+'">'+ilEff+'%</div></div>'+
+  '<div class="kbox" style="background:#e8f5e9;border-color:#4ab660"><div class="kl">ОБЩИЙ KPI</div><div class="kv '+(ov>70?'g':ov>50?'o':'r')+'">'+ov+'%</div></div>'+
+  '</div>'+
+  '<h2>2. АНАЛИЗ ПО ТИПАМ ОБОРУДОВАНИЯ</h2>'+
+  '<table><tr><th>Оборудование</th><th>Точек</th><th>Улов/Съедено</th><th>Эффективность</th><th>Оценка HACCP</th></tr>'+
+  '<tr><td>НР — Периметр</td><td>'+nrT+'</td><td>'+nrE+' шт</td><td>'+nrEff+'%</td><td>'+(nrEff>60?'✓ Норма':'⚠️ Усилить')+'</td></tr>'+
+  '<tr><td>ВН — Внутренние</td><td>'+vnT+'</td><td>'+vnR+' грыз.</td><td>'+vnEff+'%</td><td>'+(vnR===0?'✓ Чисто':'🚨 КРИТИЧНО')+'</td></tr>'+
+  '<tr><td>АВ — Амбарные</td><td>'+avT+'</td><td>'+avR+' грыз.</td><td>'+avEff+'%</td><td>'+(avR===0?'✓ Норма':'⚠️ Выявлено')+'</td></tr>'+
+  '<tr><td>ИЛ — Лампы</td><td>'+ilT+'</td><td>'+ilI+' нас.</td><td>'+ilEff+'%</td><td>'+(ilI<ilT*5?'✓ Норма':ilI<ilT*20?'⚠️ Умеренно':'🚨 Высокая активность')+'</td></tr>'+
+  '</table>'+
+  (vnR>0?'<div class="warn">⚠️ ПРЕДУПРЕЖДЕНИЕ HACCP: Выявлено '+vnR+' грызунов внутри объекта. Требуются немедленные корректирующие действия.</div>':'<div class="ok">✓ Грызуны внутри объекта не выявлены.</div>')+
+  '<h2>3. ЖУРНАЛ ТЕХНИЧЕСКИХ АКТОВ</h2>'+
+  '<table><tr><th>Дата</th><th>Направление</th><th>Объект</th><th>Адрес</th><th>Техник</th><th>Подпись</th></tr>'+rows+'</table>'+
+  '<h2>4. ЗАКЛЮЧЕНИЕ</h2>'+
+  '<p style="font-size:9pt;line-height:1.7">Общий уровень защиты: <b>'+ov+'%</b> — '+(ov>80?'Высокий. Система мониторинга функционирует эффективно.':ov>60?'Удовлетворительный. Рекомендуется усиление контроля.':'Недостаточный. Требуются немедленные меры.')+'</p>'+
+  '<div style="margin-top:20pt;display:grid;grid-template-columns:1fr 1fr;gap:20pt">'+
+  '<div><div style="font-size:9pt;color:#666;font-weight:600;margin-bottom:5pt">PEST CONTROL</div>'+
+  '<div style="height:45pt;border-bottom:1px solid #333"></div>'+
+  '<div style="font-size:9pt;margin-top:4pt">'+(p.name||'—')+'</div></div>'+
+  '<div><div style="font-size:9pt;color:#666;font-weight:600;margin-bottom:5pt">РУКОВОДИТЕЛЬ ОБЪЕКТА</div>'+
+  '<div style="height:45pt;border-bottom:1px solid #333"></div>'+
+  '<div style="font-size:9pt;margin-top:4pt">____________________</div></div></div>'+
+  '<div class="foot">HACCP | '+(p.company||'—')+' | '+dates[0]+' — '+dates[1]+'</div>'+
+  '</body></html>';
+  var w=window.open('','_blank','width=900,height=700');
+  w.document.write(html);w.document.close();w.focus();
+  setTimeout(function(){w.print();},600);
+}
+
+</script>
+</body>
+</html>
