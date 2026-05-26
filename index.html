@@ -742,12 +742,14 @@ sb.auth.getSession().then(function(r){if(r.data&&r.data.session){CU=r.data.sessi
 
 // DATA
 async function getActs(f){
-  f=f||{};var q=sb.from('acts').select('*').order('date',{ascending:false});
+  f=f||{};var q=sb.from('acts').select('*').order('date',{ascending:false}).order('created_at',{ascending:false});
   if(CP&&CP.role!=='admin')q=q.eq('user_email',CU.email);
   if(f.direction)q=q.eq('direction',f.direction);
   if(f.from)q=q.gte('date',f.from);
   if(f.to)q=q.lte('date',f.to);
-  var r=await q;if(r.error){console.error(r.error);return[];}return r.data||[];
+  var r=await q;
+  if(r.error){console.error('getActs error:',r.error);return[];}
+  return r.data||[];
 }
 function getPD(period){
   var now=new Date(),y=now.getFullYear(),m=now.getMonth();
@@ -884,9 +886,14 @@ async function saveAct(direction){
   ad.techSig=getSig(k.sigT);
   var rec={direction:direction,date:date,client_company:co,branch:br,technician:tech,actions:actions,recommendations:document.getElementById(k.recs).value,act_data:JSON.stringify(ad),tech_sig:ad.techSig||null,client_sig:clientSig,user_email:CU?CU.email:'—',created_at:new Date().toISOString()};
   var res=await sb.from('acts').insert([rec]);
-  if(res.error){alert('Ошибка: '+res.error.message);return;}
+  if(res.error){
+    var msg=res.error.message||JSON.stringify(res.error);
+    alert('Ошибка сохранения: '+msg);
+    console.error('saveAct error:',res.error);
+    return;
+  }
   okEl.style.display='flex';setTimeout(function(){okEl.style.display='none';},5000);
-  updateBadge();loadDashboard();
+  updateBadge();
 }
 
 // VIEW/PRINT ACT
