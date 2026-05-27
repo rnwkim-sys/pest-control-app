@@ -1,0 +1,2295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pest Control</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root {
+  --bg:#0f1410; --bg2:#161d17; --bg3:#1c2620; --bg4:#222e25;
+  --border:rgba(74,182,96,0.15); --border2:rgba(74,182,96,0.3);
+  --green:#4ab660; --gdim:rgba(74,182,96,0.12);
+  --red:#e05252; --rdim:rgba(224,82,82,0.1);
+  --amber:#e08c3a; --adim:rgba(224,140,58,0.1);
+  --blue:#4a9de0; --bdim:rgba(74,157,224,0.1);
+  --text:#e8f0e9; --t2:#8fa894; --t3:#5a7060;
+  --font:'Inter',sans-serif;
+  --r:10px; --r2:14px; --r3:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px}
+input,textarea,select,button{font-family:var(--font)}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ── LOGIN ── */
+#s-login{align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:36px 30px;width:380px;max-width:100%}
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.logo-ico{width:46px;height:46px;background:var(--gdim);border:1px solid var(--border2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.logo-name{font-size:20px;font-weight:700}
+.logo-ver{font-size:11px;color:var(--t3);margin-top:1px}
+.ltabs{display:flex;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:22px}
+.ltab{flex:1;padding:9px;border-radius:8px;border:none;background:none;color:var(--t2);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.ltab.on{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;color:var(--t2);font-weight:600;letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px}
+.field input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s}
+.field input:focus{border-color:var(--green)}
+.btn-main{width:100%;background:var(--green);color:#0a0f0b;border:none;border-radius:var(--r);padding:13px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn-main:hover{opacity:.9}
+.err{color:var(--red);font-size:12px;padding:8px 10px;background:var(--rdim);border-radius:8px;margin-top:10px;display:none}
+.ok{color:var(--green);font-size:12px;padding:8px 10px;background:var(--gdim);border-radius:8px;margin-top:10px;display:none}
+
+/* ── APP SHELL ── */
+#s-app{flex-direction:row}
+.sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sb-top{padding:18px 14px 14px;border-bottom:1px solid var(--border)}
+.sb-logo{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sb-ico{width:32px;height:32px;background:var(--gdim);border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.sb-title{font-size:13px;font-weight:700}
+.sb-co{font-size:11px;color:var(--t3)}
+.nav{flex:1;padding:8px}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;padding:10px 10px;border-radius:var(--r);border:none;background:none;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;text-align:left;transition:all .15s;margin-bottom:2px;font-family:var(--font)}
+.nav-btn:hover{background:var(--bg3);color:var(--text)}
+.nav-btn.on{background:var(--gdim);color:var(--green);border:1px solid var(--border2)}
+.nav-ico{font-size:17px;width:22px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px}
+.sb-user{padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.u-av{width:30px;height:30px;border-radius:50%;background:var(--gdim);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--green);flex-shrink:0}
+.u-name{font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-out{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:4px}
+
+/* ── MAIN CONTENT ── */
+.main{flex:1;overflow-y:auto;min-height:100vh}
+.page{display:none;padding:28px 28px}
+.page.on{display:block}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
+.page-title{font-size:22px;font-weight:700}
+.page-sub{font-size:13px;color:var(--t2);margin-top:3px}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:20px 22px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:700;margin-bottom:16px;color:var(--green)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.6px;text-transform:uppercase}
+.fg input,.fg select,.fg textarea{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s;font-family:var(--font)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--green)}
+.fg select option{background:var(--bg2)}
+.fg textarea{resize:vertical;min-height:70px}
+.rs{color:var(--red)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font);white-space:nowrap}
+.btn:hover{border-color:var(--border2);background:var(--bg4)}
+.btn-p{background:var(--green);color:#0a0f0b;border-color:var(--green);font-weight:700}
+.btn-p:hover{opacity:.9}
+.btn-r{background:var(--rdim);color:var(--red);border-color:rgba(224,82,82,.3)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-lg{padding:12px 20px;font-size:15px;font-weight:700}
+
+/* ── HOME (3 big tiles) ── */
+.home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:8px}
+.home-tile{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:28px 24px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:10px;text-decoration:none;user-select:none}
+.home-tile:hover{border-color:var(--border2);background:var(--bg3);transform:translateY(-2px)}
+.tile-icon{font-size:36px;margin-bottom:4px}
+.tile-title{font-size:17px;font-weight:700;color:var(--text)}
+.tile-desc{font-size:13px;color:var(--t2);line-height:1.5}
+.tile-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;margin-top:4px}
+.tile-green{background:var(--gdim);color:var(--green);border:1px solid var(--border2)}
+.tile-amber{background:var(--adim);color:var(--amber);border:1px solid rgba(224,140,58,.3)}
+.tile-blue{background:var(--bdim);color:var(--blue);border:1px solid rgba(74,157,224,.3)}
+
+/* ── TRAPS LIST ── */
+.trap-section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;justify-content:space-between;padding:10px 0;margin-bottom:10px;border-bottom:1px solid var(--border)}
+.section-name{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.trap-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;transition:border-color .15s}
+.trap-row:hover{border-color:var(--border2)}
+.trap-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot-green{background:var(--green)}
+.dot-red{background:var(--red)}
+.dot-amber{background:var(--amber)}
+.dot-gray{background:var(--t3)}
+.trap-name{font-weight:600;font-size:14px;flex:1}
+.trap-loc{font-size:12px;color:var(--t2)}
+.trap-date{font-size:11px;color:var(--t3)}
+.status-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.sb-ok{background:var(--gdim);color:var(--green)}
+.sb-warn{background:var(--adim);color:var(--amber)}
+.sb-err{background:var(--rdim);color:var(--red)}
+.sb-new{background:var(--bg3);color:var(--t2);border:1px solid var(--border)}
+.trap-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* ── ROUND (obkhod) ── */
+.round-header{background:var(--bg2);border:1px solid var(--green);border-radius:var(--r2);padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.round-meta{display:flex;gap:20px;flex-wrap:wrap}
+.round-stat{text-align:center}
+.round-stat .num{font-size:22px;font-weight:700}
+.round-stat .lbl{font-size:11px;color:var(--t2)}
+.round-progress{height:6px;background:var(--bg3);border-radius:3px;margin-bottom:20px;overflow:hidden}
+.round-progress-bar{height:100%;background:var(--green);border-radius:3px;transition:width .4s}
+
+/* ── INSPECT PANEL ── */
+.inspect-wrap{background:var(--bg2);border:2px solid var(--green);border-radius:var(--r2);padding:22px;margin-bottom:20px}
+.inspect-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.inspect-sub{font-size:13px;color:var(--t2);margin-bottom:18px}
+.big-btns{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px}
+.big-btn{background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 12px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.big-btn:hover{border-color:var(--border2);background:var(--bg4)}
+.big-btn.selected{border-color:var(--green);background:var(--gdim)}
+.big-btn.selected-warn{border-color:var(--amber);background:var(--adim)}
+.big-btn.selected-err{border-color:var(--red);background:var(--rdim)}
+.big-btn-ico{font-size:24px;margin-bottom:6px}
+.big-btn-lbl{font-size:13px;font-weight:600;color:var(--text)}
+
+/* ── ACT BUILDER ── */
+.type-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg3);cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;user-select:none}
+.chip.on{border-color:var(--green);background:var(--gdim);color:var(--green)}
+.chip input{display:none}
+
+/* ── SIG PAD ── */
+.sig-wrap{position:relative;margin-top:8px}
+.sig-pad{background:#fff;border-radius:8px;cursor:crosshair;display:block;width:100%;touch-action:none}
+.sig-clear{position:absolute;top:6px;right:6px;background:rgba(255,255,255,.8);border:1px solid #ccc;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;color:#333}
+
+/* ── SETTINGS ── */
+.settings-section{margin-bottom:24px}
+.settings-title{font-size:16px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+/* ── QR GRID ── */
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.qr-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px;text-align:center;cursor:pointer;transition:all .15s}
+.qr-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.qr-card-id{font-weight:700;font-size:14px;margin-top:10px}
+.qr-card-loc{font-size:11px;color:var(--t2);margin-top:3px}
+
+/* ── HISTORY MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);width:min(680px,100%);max-height:88vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+.modal-body{overflow-y:auto;padding:20px;flex:1}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.hist-entry{border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px;background:var(--bg3)}
+.hist-date{font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px}
+.hist-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px}
+.hist-row:last-child{border-bottom:none}
+.hist-key{color:var(--t2)}
+.hist-val{font-weight:500;text-align:right;max-width:55%}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:60px 20px;color:var(--t2)}
+.empty-ico{font-size:48px;margin-bottom:14px}
+.empty-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px}
+.empty-desc{font-size:13px;line-height:1.6}
+
+/* ── UTILS ── */
+.divider{height:1px;background:var(--border);margin:16px 0}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;display:inline-block}
+.t-green{background:var(--gdim);color:var(--green)}
+.t-amber{background:var(--adim);color:var(--amber)}
+.t-red{background:var(--rdim);color:var(--red)}
+.t-gray{background:var(--bg3);color:var(--t2)}
+.t-blue{background:var(--bdim);color:var(--blue)}
+.flex{display:flex;align-items:center;gap:8px}
+.flex-1{flex:1}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+@media(max-width:640px){
+  .sidebar{display:none}
+  .page{padding:16px}
+  .home-grid{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div class="screen active" id="s-login">
+  <div class="login-box">
+    <div class="logo-row">
+      <div class="logo-ico">🪲</div>
+      <div><div class="logo-name">Pest Control</div><div class="logo-ver">МОНИТОРИНГ v4.0</div></div>
+    </div>
+    <div class="ltabs">
+      <button class="ltab on" onclick="showLTab('in')">Войти</button>
+      <button class="ltab" onclick="showLTab('up')">Регистрация</button>
+    </div>
+    <div id="lt-in">
+      <div class="field"><label>Email</label><input type="email" id="l-email" placeholder="you@example.com"></div>
+      <div class="field"><label>Пароль</label><input type="password" id="l-pass" placeholder="••••••••"></div>
+      <button class="btn-main" onclick="doLogin()">Войти</button>
+    </div>
+    <div id="lt-up" style="display:none">
+      <div class="field"><label>Ваше имя</label><input type="text" id="r-name" placeholder="Иван Иванов"></div>
+      <div class="field"><label>Email</label><input type="email" id="r-email" placeholder="you@example.com"></div>
+      <div class="field"><label>Пароль</label><input type="password" id="r-pass" placeholder="Минимум 6 символов"></div>
+      <div class="field"><label>Компания</label><input type="text" id="r-co" placeholder="ТОО «ПестКонтроль»"></div>
+      <button class="btn-main" onclick="doRegister()">Создать аккаунт</button>
+    </div>
+    <div class="err" id="l-err"></div>
+    <div class="ok" id="l-ok"></div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div class="screen" id="s-app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo">
+        <div class="sb-ico">🪲</div>
+        <div><div class="sb-title">Pest Control</div><div class="sb-co" id="sb-co">—</div></div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn on" onclick="goPage('home',this)"><span class="nav-ico">🏠</span> Главная</button>
+      <button class="nav-btn" onclick="goPage('traps',this)"><span class="nav-ico">🗺️</span> Мои ловушки</button>
+      <button class="nav-btn" onclick="goPage('round',this)"><span class="nav-ico">📋</span> Обход <span class="nav-badge" id="nb-round" style="display:none">!</span></button>
+      <button class="nav-btn" onclick="goPage('analytics',this)"><span class="nav-ico">📊</span> Аналитика</button>
+      <button class="nav-btn" onclick="goPage('acts',this)"><span class="nav-ico">📄</span> Акты</button>
+      <button class="nav-btn" onclick="goPage('qr',this)"><span class="nav-ico">📱</span> QR-коды</button>
+      <button class="nav-btn" onclick="goPage('settings',this)"><span class="nav-ico">⚙️</span> Настройки</button>
+    </nav>
+    <div class="sb-user">
+      <div class="u-av" id="u-av">?</div>
+      <div class="u-name" id="u-name">—</div>
+      <button class="btn-out" onclick="doLogout()" title="Выйти">↩</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- HOME -->
+    <div class="page on" id="p-home">
+      <div class="topbar">
+        <div><div class="page-title" id="home-greeting">Добро пожаловать</div><div class="page-sub" id="home-date"></div></div>
+      </div>
+      <div class="home-grid">
+        <div class="home-tile" onclick="goPage('traps', document.querySelector('.nav-btn:nth-child(2)'))">
+          <div class="tile-icon">🗺️</div>
+          <div class="tile-title">Мои ловушки</div>
+          <div class="tile-desc">Список всех ловушек и точек контроля. Добавить новые, посмотреть статус.</div>
+          <span class="tile-badge tile-blue" id="home-trap-count">0 точек</span>
+        </div>
+        <div class="home-tile" onclick="startRound()">
+          <div class="tile-icon">📋</div>
+          <div class="tile-title">Начать обход</div>
+          <div class="tile-desc">Обойти все ловушки, отметить состояние каждой. Займёт 5–15 минут.</div>
+          <span class="tile-badge tile-green" id="home-round-status">Нажмите чтобы начать</span>
+        </div>
+        <div class="home-tile" onclick="goPage('acts', document.querySelector('.nav-btn:nth-child(4)'))">
+          <div class="tile-icon">📄</div>
+          <div class="tile-title">Готовый акт</div>
+          <div class="tile-desc">Сформировать акт осмотра с подписями и распечатать.</div>
+          <span class="tile-badge tile-amber" id="home-act-count">0 осмотров</span>
+        </div>
+      </div>
+
+      <!-- Quick status -->
+      <div style="margin-top:28px">
+        <div style="font-size:13px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px">Требуют внимания</div>
+        <div id="home-alerts"></div>
+      </div>
+    </div>
+
+    <!-- TRAPS -->
+    <div class="page" id="p-traps">
+      <div class="topbar">
+        <div><div class="page-title">🗺️ Мои ловушки</div><div class="page-sub">Все точки контроля вредителей</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-p" onclick="showAddTrap('single')">+ Одну ловушку</button>
+          <button class="btn" style="background:var(--bdim);color:var(--blue);border-color:rgba(74,157,224,.3)" onclick="showAddTrap('bulk')">⚡ Несколько сразу</button>
+        </div>
+      </div>
+
+      <!-- Add form (hidden by default) -->
+
+      <!-- SINGLE -->
+      <div class="card" id="add-trap-single" style="display:none;border-color:rgba(74,182,96,.4)">
+        <div class="card-title">Новая ловушка</div>
+        <div class="form-grid">
+          <div class="fg"><label>Название / номер <span class="rs">*</span></label><input type="text" id="nt-id" placeholder="НР-01"></div>
+          <div class="fg"><label>Тип ловушки <span class="rs">*</span></label>
+            <select id="nt-type" onchange="toggleLampSubtype()">
+              <option value="НР">📦 Ловушка для грызунов (наружная)</option>
+              <option value="ВН">🟨 Ловушка для грызунов (внутренняя)</option>
+              <option value="АВ">🪤 Амбарная ловушка</option>
+              <option value="ИЛ-УФ">💡 Инсектицидная лампа — УФ (без клея)</option>
+              <option value="ИЛ-КЛ">💡 Инсектицидная лампа — с клеевой подложкой</option>
+              <option value="ДЗ">🦟 Зона дезинсекции</option>
+              <option value="ПТ">🦅 Защита от птиц</option>
+            </select>
+          </div>
+          <div class="fg"><label>Объект / компания <span class="rs">*</span></label><input type="text" id="nt-co" placeholder="Склад №1, ресторан..."></div>
+          <div class="fg"><label>Место расположения</label><input type="text" id="nt-loc" placeholder="Периметр" value="Периметр"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-p" onclick="saveTrap()">✓ Сохранить</button>
+          <button class="btn" onclick="hideAddTrap()">Отмена</button>
+        </div>
+      </div>
+
+      <!-- BULK -->
+      <div class="card" id="add-trap-bulk" style="display:none;border-color:rgba(74,157,224,.4)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <div class="card-title" style="margin-bottom:0;color:var(--blue)">⚡ Добавить несколько ловушек</div>
+          <button class="btn btn-sm" onclick="hideAddTrap()">✕ Закрыть</button>
+        </div>
+
+        <!-- Common settings -->
+        <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Общие настройки для всех ловушек</div>
+          <div class="form-grid">
+            <div class="fg"><label>Объект / компания <span class="rs">*</span></label><input type="text" id="bulk-co" placeholder="Склад №1, ресторан..." oninput="previewBulk()"></div>
+            <div class="fg"><label>Место расположения</label><input type="text" id="bulk-loc" placeholder="Периметр" value="Периметр" oninput="previewBulk()"></div>
+          </div>
+        </div>
+
+        <!-- Trap type rows -->
+        <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Сколько ловушек каждого типа?</div>
+        <div id="bulk-rows">
+          <div class="bulk-type-row" data-type="НР" style="display:grid;grid-template-columns:auto 1fr auto 80px auto;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:8px">
+            <span style="font-size:17px">📦</span>
+            <span style="font-size:13px;font-weight:500">Ловушка для грызунов (наружная)</span>
+            <label style="font-size:12px;color:var(--t2)">Кол-во:</label>
+            <input type="number" class="bulk-cnt" min="0" max="99" value="0" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;text-align:center;width:100%" oninput="previewBulk()">
+            <label style="font-size:12px;color:var(--t2);white-space:nowrap">Префикс: <input type="text" class="bulk-prefix" value="НР-" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;width:60px" oninput="previewBulk()"></label>
+          </div>
+          <div class="bulk-type-row" data-type="ВН" style="display:grid;grid-template-columns:auto 1fr auto 80px auto;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:8px">
+            <span style="font-size:17px">🟨</span>
+            <span style="font-size:13px;font-weight:500">Ловушка для грызунов (внутренняя)</span>
+            <label style="font-size:12px;color:var(--t2)">Кол-во:</label>
+            <input type="number" class="bulk-cnt" min="0" max="99" value="0" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;text-align:center;width:100%" oninput="previewBulk()">
+            <label style="font-size:12px;color:var(--t2);white-space:nowrap">Префикс: <input type="text" class="bulk-prefix" value="ВН-" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;width:60px" oninput="previewBulk()"></label>
+          </div>
+          <div class="bulk-type-row" data-type="АВ" style="display:grid;grid-template-columns:auto 1fr auto 80px auto;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:8px">
+            <span style="font-size:17px">🪤</span>
+            <span style="font-size:13px;font-weight:500">Амбарная ловушка</span>
+            <label style="font-size:12px;color:var(--t2)">Кол-во:</label>
+            <input type="number" class="bulk-cnt" min="0" max="99" value="0" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;text-align:center;width:100%" oninput="previewBulk()">
+            <label style="font-size:12px;color:var(--t2);white-space:nowrap">Префикс: <input type="text" class="bulk-prefix" value="АВ-" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;width:60px" oninput="previewBulk()"></label>
+          </div>
+          <div class="bulk-type-row" data-type="ИЛ-УФ" style="display:grid;grid-template-columns:auto 1fr auto 80px auto;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:8px">
+            <span style="font-size:17px">💡</span>
+            <span style="font-size:13px;font-weight:500">УФ-лампа (без клея)</span>
+            <label style="font-size:12px;color:var(--t2)">Кол-во:</label>
+            <input type="number" class="bulk-cnt" min="0" max="99" value="0" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;text-align:center;width:100%" oninput="previewBulk()">
+            <label style="font-size:12px;color:var(--t2);white-space:nowrap">Префикс: <input type="text" class="bulk-prefix" value="УФ-" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;width:60px" oninput="previewBulk()"></label>
+          </div>
+          <div class="bulk-type-row" data-type="ИЛ-КЛ" style="display:grid;grid-template-columns:auto 1fr auto 80px auto;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:8px">
+            <span style="font-size:17px">💡</span>
+            <span style="font-size:13px;font-weight:500">Лампа с клеевой подложкой</span>
+            <label style="font-size:12px;color:var(--t2)">Кол-во:</label>
+            <input type="number" class="bulk-cnt" min="0" max="99" value="0" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;text-align:center;width:100%" oninput="previewBulk()">
+            <label style="font-size:12px;color:var(--t2);white-space:nowrap">Префикс: <input type="text" class="bulk-prefix" value="КЛ-" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;width:60px" oninput="previewBulk()"></label>
+          </div>
+          <div class="bulk-type-row" data-type="ДЗ" style="display:grid;grid-template-columns:auto 1fr auto 80px auto;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:8px">
+            <span style="font-size:17px">🦟</span>
+            <span style="font-size:13px;font-weight:500">Зона дезинсекции</span>
+            <label style="font-size:12px;color:var(--t2)">Кол-во:</label>
+            <input type="number" class="bulk-cnt" min="0" max="99" value="0" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;text-align:center;width:100%" oninput="previewBulk()">
+            <label style="font-size:12px;color:var(--t2);white-space:nowrap">Префикс: <input type="text" class="bulk-prefix" value="ДЗ-" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;width:60px" oninput="previewBulk()"></label>
+          </div>
+          <div class="bulk-type-row" data-type="ПТ" style="display:grid;grid-template-columns:auto 1fr auto 80px auto;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:8px">
+            <span style="font-size:17px">🦅</span>
+            <span style="font-size:13px;font-weight:500">Защита от птиц</span>
+            <label style="font-size:12px;color:var(--t2)">Кол-во:</label>
+            <input type="number" class="bulk-cnt" min="0" max="99" value="0" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;text-align:center;width:100%" oninput="previewBulk()">
+            <label style="font-size:12px;color:var(--t2);white-space:nowrap">Префикс: <input type="text" class="bulk-prefix" value="ПТ-" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;width:60px" oninput="previewBulk()"></label>
+          </div>
+        </div>
+
+        <!-- Нумерация с -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <label style="font-size:13px;color:var(--t2)">Нумерация с:</label>
+          <input type="number" id="bulk-start" value="1" min="1" max="999" oninput="previewBulk()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;width:80px">
+          <label style="font-size:13px;color:var(--t2)">Продолжить с существующих</label>
+          <input type="checkbox" id="bulk-continue" onchange="autoStartNum()" style="accent-color:var(--green);width:16px;height:16px;cursor:pointer">
+        </div>
+
+        <!-- Preview -->
+        <div id="bulk-preview" style="display:none;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Будет создано:</div>
+          <div id="bulk-preview-tags" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+
+        <div id="bulk-err" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-p btn-lg" onclick="saveBulkTraps()">✓ Создать все ловушки</button>
+          <button class="btn btn-lg" onclick="hideAddTrap()">Отмена</button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <input type="text" id="trap-search" placeholder="Поиск..." oninput="renderTraps()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-size:13px;outline:none;font-family:var(--font);width:200px">
+        <select id="trap-type-filter" onchange="renderTraps()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-size:13px;outline:none;font-family:var(--font)">
+          <option value="">Все типы</option>
+          <option value="НР">Грызуны наружные</option>
+          <option value="ВН">Грызуны внутренние</option>
+          <option value="АВ">Амбарные</option>
+          <option value="ИЛ-УФ">Лампы УФ (без клея)</option>
+          <option value="ИЛ-КЛ">Лампы с клеевой подложкой</option>
+          <option value="ИЛ">Лампы (все)</option>
+          <option value="ДЗ">Дезинсекция</option>
+          <option value="ПТ">Птицы</option>
+        </select>
+        <span style="font-size:13px;color:var(--t2);padding:7px 4px" id="trap-count">0 ловушек</span>
+      </div>
+
+      <div id="traps-list"></div>
+    </div>
+
+    <!-- ROUND (obkhod) -->
+    <div class="page" id="p-round">
+      <div class="topbar">
+        <div><div class="page-title">📋 Обход</div><div class="page-sub" id="round-sub">Осмотрите каждую ловушку по очереди</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="goPage('home', document.querySelector('.nav-btn'))">← Главная</button>
+          <button class="btn btn-p" id="btn-finish-round" onclick="finishRound()" style="display:none">Завершить обход →</button>
+        </div>
+      </div>
+
+      <!-- Session meta (required) -->
+      <div class="card" id="round-meta-card" style="border-color:rgba(74,182,96,.4)">
+        <div class="card-title">Данные обхода</div>
+        <div class="form-grid">
+          <div class="fg"><label>Компания Pest Control <span class="rs">*</span></label><input type="text" id="rs-co" placeholder="ТОО «ПестКонтроль»"></div>
+          <div class="fg"><label>ФИО техника <span class="rs">*</span></label><input type="text" id="rs-tech" placeholder="Иванов И.И."></div>
+          <div class="fg"><label>Дата осмотра <span class="rs">*</span></label><input type="date" id="rs-date"></div>
+          <div class="fg"><label>Объект (фильтр)</label><input type="text" id="rs-obj" placeholder="Все объекты" oninput="renderRound()"></div>
+        </div>
+        <div id="rs-err" style="display:none;color:var(--red);font-size:12px;margin-top:10px"></div>
+      </div>
+
+      <!-- Progress -->
+      <div class="round-header" id="round-hdr" style="display:none">
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">Прогресс обхода</div>
+          <div style="font-size:12px;color:var(--t2)" id="round-progress-txt">0 из 0 осмотрено</div>
+        </div>
+        <div class="round-meta">
+          <div class="round-stat"><div class="num" id="rs-done">0</div><div class="lbl">Осмотрено</div></div>
+          <div class="round-stat"><div class="num" style="color:var(--red)" id="rs-issues">0</div><div class="lbl">Отклонений</div></div>
+          <div class="round-stat"><div class="num" style="color:var(--t2)" id="rs-left">0</div><div class="lbl">Осталось</div></div>
+        </div>
+      </div>
+      <div class="round-progress" id="round-bar-wrap" style="display:none"><div class="round-progress-bar" id="round-bar" style="width:0%"></div></div>
+
+      <div id="round-list"></div>
+    </div>
+
+    <!-- ACTS -->
+    <div class="page" id="p-acts">
+      <div class="topbar">
+        <div><div class="page-title">📄 Акты осмотра</div><div class="page-sub">Сформируйте и распечатайте акт</div></div>
+      </div>
+      <div class="card" style="border-color:rgba(74,182,96,.4)">
+        <div class="card-title">Параметры акта</div>
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="fg"><label>Дата от <span class="rs">*</span></label><input type="date" id="ae-from"></div>
+          <div class="fg"><label>Дата до <span class="rs">*</span></label><input type="date" id="ae-to"></div>
+          <div class="fg"><label>Объект</label><input type="text" id="ae-obj" placeholder="Все объекты"></div>
+          <div class="fg"><label>ФИО техника <span class="rs">*</span></label><input type="text" id="ae-tech" placeholder="Иванов И.И."></div>
+          <div class="fg"><label>Ответственное лицо</label><input type="text" id="ae-client" placeholder="Петров П.П."></div>
+          <div class="fg"><label>Должность</label><input type="text" id="ae-client-title" placeholder="Директор"></div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Типы ловушек в акт</div>
+          <div class="type-chips">
+            <label class="chip on"><input type="checkbox" value="НР" checked onchange="updateChips()"><span>📦 Грызуны наружные</span></label>
+            <label class="chip on"><input type="checkbox" value="ВН" checked onchange="updateChips()"><span>🟨 Грызуны внутренние</span></label>
+            <label class="chip on"><input type="checkbox" value="АВ" checked onchange="updateChips()"><span>🪤 Амбарные</span></label>
+            <label class="chip on"><input type="checkbox" value="ИЛ-УФ" checked onchange="updateChips()"><span>💡 Лампы УФ</span></label>
+            <label class="chip on"><input type="checkbox" value="ИЛ-КЛ" checked onchange="updateChips()"><span>💡 Лампы с клеем</span></label>
+            <label class="chip on"><input type="checkbox" value="ДЗ" checked onchange="updateChips()"><span>🦟 Дезинсекция</span></label>
+            <label class="chip on"><input type="checkbox" value="ПТ" checked onchange="updateChips()"><span>🦅 Птицы</span></label>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Формат</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg3)">
+              <input type="radio" name="ae-mode" value="combined" checked style="accent-color:var(--green)">
+              📋 Общий акт (все типы вместе)
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg3)">
+              <input type="radio" name="ae-mode" value="separate" style="accent-color:var(--green)">
+              📂 По одному акту на каждый тип
+            </label>
+          </div>
+        </div>
+
+        <div id="ae-err" style="display:none;color:var(--red);font-size:12px;padding:8px 10px;background:var(--rdim);border-radius:8px;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-lg" style="background:var(--bdim);color:var(--blue);border-color:rgba(74,157,224,.3)" onclick="buildActPreview()">👁 Предпросмотр</button>
+          <button class="btn btn-p btn-lg" onclick="buildAndPrintAct()">🖨️ Сформировать и распечатать</button>
+          <button class="btn btn-lg" onclick="showEmailModal()">📧 Отправить на Email</button>
+        </div>
+      </div>
+
+      <!-- Signatures -->
+      <div class="card" id="act-sigs-card" style="display:none">
+        <div class="card-title">✍️ Подписи сторон</div>
+        <div class="grid2">
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Исполнитель (Pest Control)</div>
+            <div class="sig-wrap"><canvas class="sig-pad" id="ae-sig-tech" width="460" height="90"></canvas><button class="sig-clear" onclick="clearSig('ae-sig-tech')">✕ Стереть</button></div>
+            <div style="font-size:11px;color:var(--t3);margin-top:6px" id="ae-sig-tech-lbl"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Ответственное лицо</div>
+            <div class="sig-wrap"><canvas class="sig-pad" id="ae-sig-client" width="460" height="90"></canvas><button class="sig-clear" onclick="clearSig('ae-sig-client')">✕ Стереть</button></div>
+            <div style="font-size:11px;color:var(--t3);margin-top:6px" id="ae-sig-client-lbl"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px">
+          <button class="btn btn-p btn-lg" onclick="printActFinal()">✓ Подтвердить подписи и напечатать</button>
+        </div>
+      </div>
+
+      <!-- PREVIEW CARD -->
+      <div class="card" id="act-preview-card" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--green)">👁 Предпросмотр акта</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-p" onclick="printActFinal()">🖨️ Распечатать</button>
+            <button class="btn" onclick="document.getElementById('act-preview-card').style.display='none'">✕ Закрыть</button>
+          </div>
+        </div>
+        <div id="act-preview-body" style="background:#fff;border-radius:8px;padding:20px;color:#111;font-family:Arial,sans-serif;font-size:12px;overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- QR -->
+    <div class="page" id="p-qr">
+      <div class="topbar">
+        <div><div class="page-title">📱 QR-коды</div><div class="page-sub">Распечатайте и наклейте на каждую ловушку</div></div>
+        <button class="btn btn-p" onclick="printAllQR()">🖨️ Распечатать все</button>
+      </div>
+      <div style="margin-bottom:16px"><input type="text" id="qr-search" placeholder="Поиск ловушки..." oninput="renderQR()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-size:13px;outline:none;font-family:var(--font);width:240px"></div>
+      <div class="qr-grid" id="qr-grid"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="p-settings">
+      <div class="topbar"><div><div class="page-title">⚙️ Настройки</div></div></div>
+
+      <div class="card">
+        <div class="settings-title">👤 Профиль</div>
+        <div class="form-grid">
+          <div class="fg"><label>Имя</label><input type="text" id="set-name"></div>
+          <div class="fg"><label>Email</label><input type="email" id="set-email" readonly style="opacity:.5"></div>
+          <div class="fg"><label>Компания</label><input type="text" id="set-co"></div>
+          <div class="fg"><label>Город</label><input type="text" id="set-city"></div>
+        </div>
+        <button class="btn btn-p" style="margin-top:14px" onclick="saveProfile()">✓ Сохранить</button>
+      </div>
+
+      <div class="card">
+        <div class="settings-title">🏢 Реквизиты для актов</div>
+        <div class="form-grid">
+          <div class="fg"><label>Полное наименование</label><input type="text" id="req-name" placeholder="ТОО «ПестКонтроль»"></div>
+          <div class="fg"><label>БИН / ИНН</label><input type="text" id="req-bin" placeholder="123456789012"></div>
+          <div class="fg"><label>Лицензия</label><input type="text" id="req-lic" placeholder="№ 001 от 01.01.2024"></div>
+          <div class="fg"><label>Адрес</label><input type="text" id="req-addr" placeholder="г. Алматы, ул. ..."></div>
+          <div class="fg"><label>Телефон</label><input type="text" id="req-phone" placeholder="+7 700 000-00-00"></div>
+          <div class="fg"><label>Email компании</label><input type="email" id="req-email" placeholder="info@pest.kz"></div>
+          <div class="fg"><label>Директор / ИП</label><input type="text" id="req-director" placeholder="Иванов И.И."></div>
+          <div class="fg"><label>Должность техника</label><input type="text" id="req-tech-title" placeholder="Технический специалист"></div>
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Подпись техника (для актов)</div>
+          <div class="sig-wrap" style="max-width:500px"><canvas class="sig-pad" id="sig-main" width="500" height="90"></canvas><button class="sig-clear" onclick="clearSig('sig-main')">✕ Стереть</button></div>
+        </div>
+        <button class="btn btn-p" style="margin-top:14px" onclick="saveReq()">✓ Сохранить реквизиты</button>
+      </div>
+
+      <div class="card">
+        <div class="settings-title">🔒 Смена пароля</div>
+        <div class="form-grid">
+          <div class="fg"><label>Новый пароль</label><input type="password" id="np" placeholder="Минимум 6 символов"></div>
+          <div class="fg"><label>Повторите пароль</label><input type="password" id="cp2" placeholder="Повторите"></div>
+        </div>
+        <button class="btn btn-p" style="margin-top:14px" onclick="changePass()">✓ Изменить</button>
+      </div>
+    </div>
+
+
+    <!-- ANALYTICS -->
+    <div class="page" id="p-analytics">
+      <div class="topbar">
+        <div><div class="page-title">📊 Аналитика эффективности</div><div class="page-sub">Было → стало. Динамика за период.</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" id="an-p-month" onclick="setAnPeriod('month',this)">Месяц</button>
+          <button class="btn btn-sm on" id="an-p-quarter" onclick="setAnPeriod('quarter',this)" style="background:var(--gdim);color:var(--green);border-color:var(--border2)">Квартал</button>
+          <button class="btn btn-sm" id="an-p-year" onclick="setAnPeriod('year',this)">Год</button>
+          <button class="btn btn-p btn-sm" onclick="printAnalyticsReport()">🖨️ Сохранить PDF</button>
+          <button class="btn btn-sm" style="background:var(--bdim);color:var(--blue);border-color:rgba(74,157,224,.3)" onclick="emailAnalyticsReport()">📧 Отправить на Email</button>
+        </div>
+      </div>
+
+      <!-- Metric cards -->
+      <div id="an-metrics" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px"></div>
+
+      <!-- Was/Is bars -->
+      <div class="card" style="margin-bottom:18px">
+        <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:14px">Отклонения по типам ловушек — было → стало</div>
+        <div style="display:flex;gap:16px;margin-bottom:12px;font-size:12px;color:var(--t2)">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--t3);margin-right:5px"></span>Было</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--green);margin-right:5px"></span>Стало</span>
+        </div>
+        <div id="an-bars"></div>
+      </div>
+
+      <!-- Monthly trend chart -->
+      <div class="card" style="margin-bottom:18px">
+        <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:4px">Динамика отклонений по месяцам</div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:14px">Количество проблемных точек за каждый месяц</div>
+        <div style="position:relative;width:100%;height:200px">
+          <canvas id="an-trend-chart" role="img" aria-label="Линейный график динамики отклонений по месяцам"></canvas>
+        </div>
+      </div>
+
+      <!-- Hot spots + Best points -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:18px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:12px">🔴 Проблемные точки</div>
+          <div id="an-hotspots"></div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:12px">✅ Лучшие точки</div>
+          <div id="an-best"></div>
+        </div>
+      </div>
+
+      <!-- Objects comparison -->
+      <div class="card" style="margin-bottom:18px">
+        <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:12px">Эффективность по объектам</div>
+        <div id="an-objects"></div>
+      </div>
+
+      <!-- Coverage -->
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:12px">Регулярность обходов</div>
+        <div id="an-coverage"></div>
+      </div>
+    </div>
+
+
+<!-- EMAIL MODAL -->
+<div class="overlay" id="email-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <div style="font-weight:700;font-size:15px">📧 Отправить акт на Email</div>
+      <button class="btn btn-sm" onclick="document.getElementById('email-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">Акт будет открыт в вашем почтовом приложении (Outlook, Apple Mail) с готовым текстом.</div>
+      <div class="fg" style="margin-bottom:12px">
+        <label>Email получателя</label>
+        <input type="email" id="em-to" placeholder="client@example.com">
+      </div>
+      <div class="fg" style="margin-bottom:12px">
+        <label>Тема письма</label>
+        <input type="text" id="em-subject">
+      </div>
+      <div class="fg">
+        <label>Текст письма</label>
+        <textarea id="em-body" rows="10" style="font-size:11px;font-family:monospace"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-p" onclick="openMailClient()">📬 Открыть в почте</button>
+      <button class="btn" onclick="copyEmailText()">📋 Копировать текст</button>
+      <button class="btn" onclick="document.getElementById('email-modal').classList.remove('open')">Отмена</button>
+    </div>
+  </div>
+</div>
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══ HISTORY MODAL ═══ -->
+<div class="overlay" id="hist-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div><div style="font-weight:700;font-size:15px" id="hm-title">История</div><div style="font-size:12px;color:var(--t2);margin-top:2px" id="hm-sub"></div></div>
+      <button class="btn btn-sm" onclick="closeHistModal()">✕</button>
+    </div>
+    <div class="modal-body" id="hm-body"></div>
+    <div class="modal-foot">
+      <select id="hm-date" onchange="renderHistEntry()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font)"></select>
+      <button class="btn btn-p btn-sm" onclick="printHistAct()">🖨️ Печать акта</button>
+      <button class="btn btn-sm" onclick="emailHistAct()">📧 Email</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ INSPECT MODAL ═══ -->
+<div class="overlay" id="insp-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head">
+      <div><div style="font-weight:700;font-size:15px" id="im-title">Осмотр</div><div style="font-size:12px;color:var(--t2);margin-top:2px" id="im-sub"></div></div>
+      <button class="btn btn-sm" onclick="closeInspModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="big-btns" id="im-btns"></div>
+      <div class="fg">
+        <label>Комментарий / корректирующие действия</label>
+        <textarea id="im-comment" rows="3" placeholder="Опишите что сделали или что нужно сделать..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-p" onclick="saveInspection()">💾 Сохранить</button>
+      <button class="btn" onclick="closeInspModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SURL='https://iuyhldaffxqsxuhqizsl.supabase.co';
+const SKEY='sb_publishable_3Fup75n8Y_938rXg44GnMw_EJnrlb-a';
+const sb=supabase.createClient(SURL,SKEY);
+var CU=null, CP=null;
+var today=new Date().toISOString().split('T')[0];
+
+// ── TRAP TYPE CONFIG ──────────────────────────────────────────────────
+var TYPE_INFO = {
+  'НР':{label:'Ловушка для грызунов (наружная)', icon:'📦', color:'var(--blue)'},
+  'ВН':{label:'Ловушка для грызунов (внутренняя)', icon:'🟨', color:'var(--purple,#9b6de0)'},
+  'АВ':{label:'Амбарная ловушка', icon:'🪤', color:'var(--amber)'},
+  'ИЛ':{label:'Инсектицидная лампа', icon:'💡', color:'var(--green)'},
+  'ИЛ-УФ':{label:'Инсект. лампа УФ (без клея)', icon:'💡', color:'var(--green)'},
+  'ИЛ-КЛ':{label:'Инсект. лампа с клеевой подложкой', icon:'💡', color:'var(--green)'},
+  'ДЗ':{label:'Зона дезинсекции', icon:'🦟', color:'var(--amber)'},
+  'ПТ':{label:'Защита от птиц', icon:'🦅', color:'var(--blue)'}
+};
+
+// Status options per type
+var STATUS_OPTS = {
+  'НР':['✅ Всё в порядке','🐀 Грызун пойман','🍖 Приманка съедена','⚠️ Требует замены'],
+  'ВН':['✅ Всё в порядке','🐀 Грызун пойман','🍖 Приманка съедена','⚠️ Требует замены'],
+  'АВ':['✅ Всё в порядке','🐛 Насекомые есть','🔧 Ловушка сработала','⚠️ Требует замены'],
+  'ИЛ-УФ':['✅ Лампа работает','🐛 Много насекомых','💡 Нужна замена УФ-лампы','⚠️ Лампа не работает'],
+  'ИЛ-КЛ':['✅ Лампа и клей в норме','🐛 Клеевая подложка заполнена','🔄 Заменена клеевая подложка','💡 Нужна замена УФ-лампы','⚠️ Лампа не работает'],
+  'ИЛ':['✅ Лампа работает','🐛 Много насекомых','💡 Нужна замена лампы','⚠️ Лампа не работает'],
+  'ДЗ':['✅ Норма','🐛 Вспышка насекомых','🔧 Требует обработки','⚠️ Внеплановая обработка'],
+  'ПТ':['✅ Защита работает','🦅 Птицы есть','🔧 Повреждение','⚠️ Требует ремонта']
+};
+
+var STATUS_CLASS = {
+  '✅ Всё в порядке':'selected', '✅ Лампа работает':'selected', '✅ Лампа и клей в норме':'selected',
+  '✅ Защита работает':'selected', '✅ Норма':'selected',
+  '🐀 Грызун пойман':'selected-err', '🐛 Насекомые есть':'selected-warn', '🐛 Много насекомых':'selected-warn',
+  '🐛 Клеевая подложка заполнена':'selected-warn', '🔄 Заменена клеевая подложка':'selected',
+  '💡 Нужна замена УФ-лампы':'selected-warn', '💡 Нужна замена лампы':'selected-warn',
+  '⚠️ Лампа не работает':'selected-err',
+  '🍖 Приманка съедена':'selected-warn', '🔧 Ловушка сработала':'selected-warn', '🔧 Требует обработки':'selected-warn',
+  '🔧 Повреждение':'selected-warn', '⚠️ Требует замены':'selected-err', '💡 Нужна замена лампы':'selected-warn',
+  '⚠️ Не работает':'selected-err', '🐛 Вспышка насекомых':'selected-err', '⚠️ Внеплановая обработка':'selected-err',
+  '🦅 Птицы есть':'selected-warn', '⚠️ Требует ремонта':'selected-err'
+};
+
+// ── DATA ──────────────────────────────────────────────────────────────
+var trapsData = JSON.parse(localStorage.getItem('pc_traps')||'[]');
+function saveTraps(){ localStorage.setItem('pc_traps', JSON.stringify(trapsData)); }
+
+var histData = JSON.parse(localStorage.getItem('pc_hist')||'[]');
+function saveHist(){ localStorage.setItem('pc_hist', JSON.stringify(histData)); }
+
+function getReq(){ return JSON.parse(localStorage.getItem('pc_req')||'{}'); }
+function saveReqData(r){ localStorage.setItem('pc_req', JSON.stringify(r)); }
+
+// ── AUTH ──────────────────────────────────────────────────────────────
+function showLTab(t){
+  document.getElementById('lt-in').style.display = t==='in'?'block':'none';
+  document.getElementById('lt-up').style.display = t==='up'?'block':'none';
+  document.querySelectorAll('.ltab').forEach(function(b,i){b.classList.toggle('on', (t==='in'&&i===0)||(t==='up'&&i===1));});
+}
+
+async function doLogin(){
+  var e=document.getElementById('l-email').value.trim();
+  var p=document.getElementById('l-pass').value;
+  var err=document.getElementById('l-err');
+  err.style.display='none';
+  if(!e||!p){err.textContent='Заполните email и пароль';err.style.display='block';return;}
+  try{
+    var r=await sb.auth.signInWithPassword({email:e,password:p});
+    if(r.error)throw r.error;
+    CU=r.data.user;
+    CP={name:CU.user_metadata.name||'',company:CU.user_metadata.company||'',city:CU.user_metadata.city||'',email:CU.email,role:CU.user_metadata.role||'manager'};
+    showApp();
+  }catch(ex){err.textContent=ex.message||'Ошибка входа';err.style.display='block';}
+}
+
+async function doRegister(){
+  var n=document.getElementById('r-name').value.trim();
+  var e=document.getElementById('r-email').value.trim();
+  var p=document.getElementById('r-pass').value;
+  var co=document.getElementById('r-co').value.trim();
+  var err=document.getElementById('l-err'), ok=document.getElementById('l-ok');
+  err.style.display='none'; ok.style.display='none';
+  if(!n||!e||!p){err.textContent='Заполните все поля';err.style.display='block';return;}
+  try{
+    var r=await sb.auth.signUp({email:e,password:p,options:{data:{name:n,company:co,role:'manager'}}});
+    if(r.error)throw r.error;
+    ok.textContent='Аккаунт создан! Проверьте email для подтверждения.';ok.style.display='block';
+  }catch(ex){err.textContent=ex.message;err.style.display='block';}
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  CU=null;CP=null;
+  document.getElementById('s-app').classList.remove('active');
+  document.getElementById('s-login').classList.add('active');
+}
+
+// ── APP INIT ─────────────────────────────────────────────────────────
+function showApp(){
+  document.getElementById('s-login').classList.remove('active');
+  document.getElementById('s-app').classList.add('active');
+  var n=CP&&CP.name?CP.name:'';
+  var co=CP&&CP.company?CP.company:'';
+  document.getElementById('u-name').textContent=n||CP.email||'—';
+  document.getElementById('u-av').textContent=(n||'?')[0].toUpperCase();
+  document.getElementById('sb-co').textContent=co;
+  var parts=n.trim().split(' ');var first=parts.length>=2?parts[parts.length-1]:parts[0];document.getElementById('home-greeting').textContent='Привет, '+(first||'!')+'!';
+  var days=['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+  var months=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  var d=new Date();
+  document.getElementById('home-date').textContent=days[d.getDay()]+', '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+  loadReqToSettings();
+  initSigPads();
+  updateHomeStats();
+  renderTraps();
+  renderRound();
+  renderQR();
+  // Pre-fill act dates
+  document.getElementById('ae-from').value=today;
+  document.getElementById('ae-to').value=today;
+  // Pre-fill round date
+  document.getElementById('rs-date').value=today;
+  // Pre-fill from req
+  var req=getReq();
+  if(req.name) document.getElementById('rs-co').value=req.name;
+  if(req.director||(CP&&CP.name)) document.getElementById('rs-tech').value=req.director||(CP&&CP.name)||'';
+  if(req.director||(CP&&CP.name)) document.getElementById('ae-tech').value=req.director||(CP&&CP.name)||'';
+}
+
+function goPage(id, btn){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('on');});
+  document.getElementById('p-'+id).classList.add('on');
+  if(btn) btn.classList.add('on');
+  if(id==='traps') renderTraps();
+  if(id==='round') renderRound();
+  if(id==='qr') renderQR();
+  if(id==='home') updateHomeStats();
+  if(id==='analytics') renderAnalytics();
+}
+
+// ── TRAPS ─────────────────────────────────────────────────────────────
+function showAddTrap(mode){
+  document.getElementById('add-trap-single').style.display = mode==='single' ? 'block' : 'none';
+  document.getElementById('add-trap-bulk').style.display   = mode==='bulk'   ? 'block' : 'none';
+  if(mode==='bulk'){ autoStartNum(); previewBulk(); }
+  var el = document.getElementById(mode==='single'?'add-trap-single':'add-trap-bulk');
+  if(el) el.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function hideAddTrap(){
+  document.getElementById('add-trap-single').style.display='none';
+  document.getElementById('add-trap-bulk').style.display='none';
+}
+
+function saveTrap(){
+  var id=document.getElementById('nt-id').value.trim();
+  var type=document.getElementById('nt-type').value;
+  var co=document.getElementById('nt-co').value.trim();
+  var loc=document.getElementById('nt-loc').value.trim()||'Периметр';
+  if(!id||!co){alert('Укажите название и объект');return;}
+  if(trapsData.some(function(t){return t.id===id&&t.company===co;})){alert('Ловушка «'+id+'» в «'+co+'» уже существует');return;}
+  trapsData.push({id:id, type:type, company:co, location:loc, created:today});
+  saveTraps();
+  document.getElementById('nt-id').value='';
+  document.getElementById('nt-co').value='';
+  document.getElementById('nt-loc').value='Периметр';
+  hideAddTrap();
+  renderTraps();
+  updateHomeStats();
+}
+
+// ── BULK ADD ──────────────────────────────────────────────────────────
+function autoStartNum(){
+  var cont = document.getElementById('bulk-continue');
+  if(!cont||!cont.checked) return;
+  // Find max number across all existing traps
+  var maxNum = 0;
+  trapsData.forEach(function(t){
+    var m = t.id.match(/(\d+)$/);
+    if(m) maxNum = Math.max(maxNum, parseInt(m[1]));
+  });
+  document.getElementById('bulk-start').value = maxNum+1;
+  previewBulk();
+}
+
+function previewBulk(){
+  var co = (document.getElementById('bulk-co').value||'').trim();
+  var loc = (document.getElementById('bulk-loc').value||'Периметр').trim();
+  var startNum = parseInt(document.getElementById('bulk-start').value)||1;
+  var preview = [];
+  var counter = startNum;
+  document.querySelectorAll('.bulk-type-row').forEach(function(row){
+    var type = row.dataset.type;
+    var cnt  = parseInt(row.querySelector('.bulk-cnt').value)||0;
+    var prefix = (row.querySelector('.bulk-prefix').value||type+'-').trim();
+    for(var i=0; i<cnt; i++){
+      preview.push({id: prefix+counter, type:type, company:co||'—', location:loc});
+      counter++;
+    }
+  });
+  var wrap = document.getElementById('bulk-preview');
+  var tags = document.getElementById('bulk-preview-tags');
+  if(!preview.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  var TYPE_COLORS={'НР':'var(--bdim)','ВН':'rgba(155,109,224,.15)','АВ':'var(--adim)','ИЛ':'var(--gdim)','ДЗ':'var(--adim)','ПТ':'var(--bdim)'};
+  tags.innerHTML = preview.map(function(p){
+    return '<span style="font-size:12px;padding:4px 10px;border-radius:20px;background:'+(TYPE_COLORS[p.type]||'var(--bg3)')+';border:1px solid var(--border);font-weight:600">'+p.id+'</span>';
+  }).join('');
+  // Show total count
+  var existing = document.getElementById('bulk-preview-count');
+  if(!existing){
+    var countEl = document.createElement('div');
+    countEl.id='bulk-preview-count';
+    countEl.style.cssText='font-size:12px;color:var(--t2);margin-top:8px';
+    wrap.appendChild(countEl);
+  }
+  document.getElementById('bulk-preview-count').textContent = 'Итого: '+preview.length+' ловушек'+(co?' в объекте «'+co+'»':'');
+}
+
+function saveBulkTraps(){
+  var co  = (document.getElementById('bulk-co').value||'').trim();
+  var loc = (document.getElementById('bulk-loc').value||'Периметр').trim();
+  var err = document.getElementById('bulk-err');
+  if(!co){ err.textContent='⚠️ Укажите объект / компанию'; err.style.display='block'; return; }
+  err.style.display='none';
+
+  var startNum = parseInt(document.getElementById('bulk-start').value)||1;
+  var toAdd = [], counter = startNum, skipped = [];
+
+  document.querySelectorAll('.bulk-type-row').forEach(function(row){
+    var type   = row.dataset.type;
+    var cnt    = parseInt(row.querySelector('.bulk-cnt').value)||0;
+    var prefix = (row.querySelector('.bulk-prefix').value||type+'-').trim();
+    for(var i=0; i<cnt; i++){
+      var id = prefix+counter;
+      if(trapsData.some(function(t){return t.id===id&&t.company===co;})){
+        skipped.push(id); counter++; continue;
+      }
+      toAdd.push({id:id, type:type, company:co, location:loc, created:today});
+      counter++;
+    }
+  });
+
+  if(!toAdd.length){
+    err.textContent = skipped.length ? '⚠️ Все ловушки уже существуют: '+skipped.join(', ') : '⚠️ Укажите количество хотя бы одного типа';
+    err.style.display='block'; return;
+  }
+
+  toAdd.forEach(function(t){ trapsData.push(t); });
+  saveTraps();
+  hideAddTrap();
+
+  // Reset counts
+  document.querySelectorAll('.bulk-cnt').forEach(function(i){i.value='0';});
+  document.getElementById('bulk-co').value='';
+  document.getElementById('bulk-loc').value='Периметр';
+  document.getElementById('bulk-start').value='1';
+
+  renderTraps();
+  updateHomeStats();
+
+  var msg = '✅ Создано '+toAdd.length+' ловушек!';
+  if(skipped.length) msg += ' | Пропущено: '+skipped.join(', ');
+  alert(msg);
+}
+
+function deleteTrap(i){
+  if(!confirm('Удалить ловушку '+trapsData[i].id+'?')) return;
+  trapsData.splice(i,1);
+  saveTraps();
+  renderTraps();
+  updateHomeStats();
+}
+
+function getTrapStatus(trap){
+  var last=histData.filter(function(h){return h.trapId===trap.id&&h.company===trap.company;}).slice(-1)[0];
+  if(!last) return {cls:'sb-new',text:'Не осмотрена',dot:'dot-gray'};
+  var s=last.status||'';
+  if(s.startsWith('✅')) return {cls:'sb-ok',text:last.date,dot:'dot-green'};
+  if(s.includes('⚠️')||s.startsWith('🐀')) return {cls:'sb-err',text:'⚠️ '+last.date,dot:'dot-red'};
+  return {cls:'sb-warn',text:'⚡ '+last.date,dot:'dot-amber'};
+}
+
+function renderTraps(){
+  var search=(document.getElementById('trap-search').value||'').toLowerCase();
+  var typeF=document.getElementById('trap-type-filter').value;
+  var filtered=trapsData.filter(function(t){
+    if(typeF&&t.type!==typeF&&!(typeF==='ИЛ'&&(t.type==='ИЛ-УФ'||t.type==='ИЛ-КЛ'))) return false;
+    if(search&&!(t.id+t.company+t.location).toLowerCase().includes(search)) return false;
+    return true;
+  });
+  document.getElementById('trap-count').textContent=filtered.length+' ловушек';
+  var el=document.getElementById('traps-list');
+  if(!filtered.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">🔍</div><div class="empty-title">Ловушек нет</div><div class="empty-desc">Нажмите «+ Добавить ловушку» чтобы создать первую точку контроля.</div></div>';
+    return;
+  }
+  // Group by type
+  var groups={};
+  filtered.forEach(function(t){
+    if(!groups[t.type]) groups[t.type]=[];
+    groups[t.type].push(t);
+  });
+  var html='';
+  Object.keys(groups).forEach(function(type){
+    var ti=TYPE_INFO[type]||{label:type,icon:'📍'};
+    html+='<div class="trap-section"><div class="section-header"><div class="section-name">'+ti.icon+' '+ti.label+'</div><span class="tag t-gray">'+groups[type].length+' шт.</span></div>';
+    groups[type].forEach(function(t){
+      var realIdx=trapsData.indexOf(t);
+      var st=getTrapStatus(t);
+      html+='<div class="trap-row">'+
+        '<div class="trap-dot '+st.dot+'"></div>'+
+        '<div style="flex:1"><div class="trap-name">'+t.id+'</div><div class="trap-loc">'+t.company+' · '+t.location+'</div></div>'+
+        '<span class="status-badge '+st.cls+'">'+st.text+'</span>'+
+        '<div class="trap-actions">'+
+        '<button class="btn btn-sm" onclick="openHistModal(\''+t.id+'\',\''+escQ(t.company)+'\')">📂</button>'+
+        '<button class="btn btn-sm btn-r" onclick="deleteTrap('+realIdx+')">🗑</button>'+
+        '</div></div>';
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function escQ(s){return (s||'').replace(/'/g,"\\'")}
+
+// ── ROUND ─────────────────────────────────────────────────────────────
+var _roundState = {}; // trapId+company -> {status, comment}
+
+function startRound(){
+  goPage('round', document.querySelectorAll('.nav-btn')[2]);
+}
+
+function renderRound(){
+  var obj=(document.getElementById('rs-obj')&&document.getElementById('rs-obj').value||'').toLowerCase();
+  var list=trapsData.filter(function(t){return !obj||t.company.toLowerCase().includes(obj);});
+  var container=document.getElementById('round-list');
+  if(!list.length){
+    container.innerHTML='<div class="empty"><div class="empty-ico">🗺️</div><div class="empty-title">Нет ловушек</div><div class="empty-desc">Сначала добавьте ловушки на странице «Мои ловушки».</div></div>';
+    document.getElementById('round-hdr').style.display='none';
+    document.getElementById('round-bar-wrap').style.display='none';
+    return;
+  }
+  var done=list.filter(function(t){return _roundState[t.id+'|'+t.company];}).length;
+  var issues=list.filter(function(t){
+    var s=(_roundState[t.id+'|'+t.company]||{}).status||'';
+    return s&&!s.startsWith('✅');
+  }).length;
+  var left=list.length-done;
+  document.getElementById('round-hdr').style.display='flex';
+  document.getElementById('round-bar-wrap').style.display='block';
+  document.getElementById('rs-done').textContent=done;
+  document.getElementById('rs-issues').textContent=issues;
+  document.getElementById('rs-left').textContent=left;
+  document.getElementById('round-progress-txt').textContent=done+' из '+list.length+' осмотрено';
+  document.getElementById('round-bar').style.width=Math.round(done/list.length*100)+'%';
+  document.getElementById('round-sub').textContent=done+' из '+list.length+' ловушек осмотрено';
+  var showFinish=done>0&&done===list.length;
+  document.getElementById('btn-finish-round').style.display=showFinish?'':'none';
+  document.getElementById('nb-round').style.display=issues>0?'':'none';
+
+  // Group by type
+  var groups={};
+  list.forEach(function(t){if(!groups[t.type])groups[t.type]=[];groups[t.type].push(t);});
+  var html='';
+  Object.keys(groups).forEach(function(type){
+    var ti=TYPE_INFO[type]||{label:type,icon:'📍'};
+    html+='<div class="trap-section"><div class="section-header"><div class="section-name">'+ti.icon+' '+ti.label+'</div></div>';
+    groups[type].forEach(function(t){
+      var key=t.id+'|'+t.company;
+      var state=_roundState[key];
+      var dot=state?(state.status.startsWith('✅')?'dot-green':state.status.includes('⚠️')||state.status.startsWith('🐀')?'dot-red':'dot-amber'):'dot-gray';
+      var badge=state?('<span class="status-badge '+(state.status.startsWith('✅')?'sb-ok':state.status.includes('⚠️')||state.status.startsWith('🐀')?'sb-err':'sb-warn')+'">'+state.status+'</span>'):'<span class="status-badge sb-new">Не осмотрена</span>';
+      var btn=state?'<button class="btn btn-sm" onclick="openInspModal(\''+escQ(t.id)+'\',\''+escQ(t.company)+'\',\''+t.type+'\')">Изменить</button>':'<button class="btn btn-p btn-sm" onclick="openInspModal(\''+escQ(t.id)+'\',\''+escQ(t.company)+'\',\''+t.type+'\')">Осмотреть →</button>';
+      html+='<div class="trap-row"><div class="trap-dot '+dot+'"></div><div style="flex:1"><div class="trap-name">'+t.id+'</div><div class="trap-loc">'+t.company+' · '+t.location+'</div>'+(state&&state.comment?'<div style="font-size:11px;color:var(--amber);margin-top:3px">📌 '+state.comment+'</div>':'')+'</div>'+badge+btn+'</div>';
+    });
+    html+='</div>';
+  });
+  container.innerHTML=html;
+}
+
+// ── INSPECT MODAL ─────────────────────────────────────────────────────
+var _inspTarget = null;
+function openInspModal(id, company, type){
+  // Resolve exact subtype from saved trap data (e.g. ИЛ-УФ vs ИЛ-КЛ)
+  var trap = trapsData.filter(function(t){return t.id===id&&t.company===company;})[0];
+  var resolvedType = (trap&&trap.type)||type;
+  _inspTarget={id:id, company:company, type:resolvedType};
+  var ti=TYPE_INFO[resolvedType]||TYPE_INFO[type]||{label:type};
+  document.getElementById('im-title').textContent='Осмотр: '+id;
+  document.getElementById('im-sub').textContent=ti.label+' · '+company;
+  var opts=STATUS_OPTS[resolvedType]||STATUS_OPTS[type]||['✅ Всё в порядке','⚠️ Отклонение'];
+  var key=id+'|'+company;
+  var cur=(_roundState[key]||{}).status||'';
+  var btnHtml=opts.map(function(o){
+    var sc=STATUS_CLASS[o]||'';
+    var active=o===cur?' '+sc:'';
+    return '<div class="big-btn'+active+'" onclick="selectStatus(this,\''+escQ(o)+'\')">'+o+'</div>';
+  }).join('');
+  document.getElementById('im-btns').innerHTML=btnHtml;
+  document.getElementById('im-comment').value=(_roundState[key]||{}).comment||'';
+  document.getElementById('insp-modal').classList.add('open');
+}
+
+function selectStatus(el, val){
+  document.querySelectorAll('#im-btns .big-btn').forEach(function(b){b.className='big-btn';});
+  var sc=STATUS_CLASS[val]||'selected';
+  el.className='big-btn '+sc;
+  el.dataset.val=val;
+}
+
+function getSelectedStatus(){
+  var sel=document.querySelector('#im-btns .big-btn.selected, #im-btns .big-btn.selected-warn, #im-btns .big-btn.selected-err');
+  if(sel) return sel.dataset.val||sel.textContent.trim();
+  return null;
+}
+
+function saveInspection(){
+  var status=getSelectedStatus();
+  if(!status){alert('Выберите статус ловушки');return;}
+  var comment=document.getElementById('im-comment').value.trim();
+  var key=_inspTarget.id+'|'+_inspTarget.company;
+  _roundState[key]={status:status, comment:comment};
+  closeInspModal();
+  renderRound();
+}
+
+function closeInspModal(){document.getElementById('insp-modal').classList.remove('open');}
+
+// ── FINISH ROUND ─────────────────────────────────────────────────────
+function finishRound(){
+  var co=document.getElementById('rs-co').value.trim();
+  var tech=document.getElementById('rs-tech').value.trim();
+  var date=document.getElementById('rs-date').value;
+  var err=document.getElementById('rs-err');
+  if(!co||!tech||!date){
+    err.textContent='⚠️ Укажите компанию Pest Control, ФИО техника и дату';
+    err.style.display='block';
+    document.getElementById('round-meta-card').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  err.style.display='none';
+  var req=getReq();
+  var obj=(document.getElementById('rs-obj').value||'').toLowerCase();
+  var list=trapsData.filter(function(t){return !obj||t.company.toLowerCase().includes(obj);});
+  var sessionId='sess-'+date+'-'+Date.now();
+  list.forEach(function(t){
+    var key=t.id+'|'+t.company;
+    var state=_roundState[key]||{status:'✅ Всё в порядке',comment:''};
+    histData.push({
+      trapId:t.id, company:t.company, type:t.type, location:t.location||'Периметр',
+      date:date, status:state.status, comment:state.comment,
+      pestCo:co, techName:tech, techTitle:req.techTitle||'Технический специалист',
+      sigTech:req.sigMain||null, sigClient:null, clientName:'', clientTitle:'',
+      sessionId:sessionId
+    });
+  });
+  saveHist();
+  _roundState={};
+  renderRound();
+  updateHomeStats();
+  alert('✅ Обход сохранён! '+list.length+' точек осмотрено.\n\nДля печати акта перейдите в раздел «Акты».');
+}
+
+// ── HOME STATS ────────────────────────────────────────────────────────
+function updateHomeStats(){
+  document.getElementById('home-trap-count').textContent=trapsData.length+' точек';
+  var todayHist=histData.filter(function(h){return h.date===today;}).length;
+  document.getElementById('home-act-count').textContent=todayHist+' осмотров сегодня';
+  // Alerts
+  var alerts=[];
+  trapsData.forEach(function(t){
+    var last=histData.filter(function(h){return h.trapId===t.id&&h.company===t.company;}).slice(-1)[0];
+    if(last&&last.status&&!last.status.startsWith('✅')&&!last.status.includes('✅')){
+      alerts.push({id:t.id,co:t.company,status:last.status,date:last.date});
+    }
+  });
+  var el=document.getElementById('home-alerts');
+  if(!alerts.length){
+    el.innerHTML='<div style="color:var(--t2);font-size:13px;padding:12px 0">✅ Все ловушки в норме</div>';
+    return;
+  }
+  el.innerHTML=alerts.slice(0,5).map(function(a){
+    return '<div class="trap-row"><div class="trap-dot dot-amber"></div><div style="flex:1"><div class="trap-name">'+a.id+'</div><div class="trap-loc">'+a.co+'</div></div><span class="status-badge sb-warn">'+a.status+'</span><span class="trap-date">'+a.date+'</span></div>';
+  }).join('');
+}
+
+// ── HISTORY MODAL ─────────────────────────────────────────────────────
+var _histTarget=null;
+function openHistModal(id, company){
+  _histTarget={id:id,company:company};
+  var entries=histData.filter(function(h){return h.trapId===id&&h.company===company;});
+  var trap=trapsData.filter(function(t){return t.id===id&&t.company===company;})[0]||{};
+  var ti=TYPE_INFO[trap.type]||{label:trap.type||''};
+  document.getElementById('hm-title').textContent='История: '+id;
+  document.getElementById('hm-sub').textContent=ti.label+' · '+company;
+  var sel=document.getElementById('hm-date');
+  sel.innerHTML='';
+  if(!entries.length){
+    document.getElementById('hm-body').innerHTML='<div class="empty"><div class="empty-ico">📂</div><div class="empty-title">Нет истории</div><div class="empty-desc">Эта ловушка ещё не осматривалась.</div></div>';
+  } else {
+    entries.slice().reverse().forEach(function(e,i){
+      var opt=document.createElement('option');
+      opt.value=histData.indexOf(e);
+      opt.textContent=e.date+' — '+(e.status||'—');
+      sel.appendChild(opt);
+    });
+    renderHistEntry();
+  }
+  document.getElementById('hist-modal').classList.add('open');
+}
+
+function renderHistEntry(){
+  var idx=parseInt(document.getElementById('hm-date').value);
+  var e=histData[idx];
+  if(!e){document.getElementById('hm-body').innerHTML='';return;}
+  var sigT=e.sigTech?'<img src="'+e.sigTech+'" style="height:44px;border:1px solid var(--border);border-radius:6px;background:#fff;padding:3px">':'<span style="color:var(--t3);font-size:12px">Не подписан</span>';
+  var sigC=e.sigClient?'<img src="'+e.sigClient+'" style="height:44px;border:1px solid var(--border);border-radius:6px;background:#fff;padding:3px">':'<span style="color:var(--t3);font-size:12px">Не подписан</span>';
+  var isOk=e.status&&e.status.startsWith('✅');
+  document.getElementById('hm-body').innerHTML=
+    '<div class="hist-entry">'+
+    '<div class="hist-date">'+e.date+'</div>'+
+    '<div class="hist-row"><span class="hist-key">Статус</span><span class="hist-val"><span class="tag '+(isOk?'t-green':e.status&&e.status.includes('⚠️')?'t-red':'t-amber')+'">'+e.status+'</span></span></div>'+
+    (e.comment?'<div class="hist-row"><span class="hist-key">Комментарий</span><span class="hist-val" style="color:var(--amber)">'+e.comment+'</span></div>':'')+
+    '<div class="hist-row"><span class="hist-key">Техник</span><span class="hist-val">'+e.techName+'</span></div>'+
+    '<div class="hist-row"><span class="hist-key">Компания</span><span class="hist-val">'+e.pestCo+'</span></div>'+
+    '</div>'+
+    '<div class="grid2" style="margin-top:14px">'+
+    '<div><div style="font-size:10px;color:var(--t2);margin-bottom:6px;font-weight:600">ИСПОЛНИТЕЛЬ</div>'+sigT+'<div style="font-size:12px;margin-top:4px">'+e.techName+'</div></div>'+
+    '<div><div style="font-size:10px;color:var(--t2);margin-bottom:6px;font-weight:600">ОТВЕТСТВЕННОЕ ЛИЦО</div>'+sigC+'<div style="font-size:12px;margin-top:4px">'+(e.clientName||'—')+'</div></div>'+
+    '</div>';
+}
+
+function closeHistModal(){document.getElementById('hist-modal').classList.remove('open');}
+
+function printHistAct(){
+  var idx=parseInt(document.getElementById('hm-date').value);
+  var e=histData[idx];
+  if(!e) return;
+  printSingleAct([e], getReq(), getSig('ae-sig-tech'), null, {tech:e.techName,client:e.clientName||'',clientTitle:e.clientTitle||''});
+}
+
+function emailHistAct(){
+  var idx=parseInt(document.getElementById('hm-date').value);
+  var e=histData[idx];
+  if(!e) return;
+  var req=getReq();
+  var to=req.email||'';
+  var sub=encodeURIComponent('Акт осмотра '+e.trapId+' от '+e.date);
+  var body=encodeURIComponent('Точка: '+e.trapId+'\nОбъект: '+e.company+'\nДата: '+e.date+'\nСтатус: '+e.status+(e.comment?'\nКомментарий: '+e.comment:'')+'\nТехник: '+e.techName);
+  window.location.href='mailto:'+to+'?subject='+sub+'&body='+body;
+}
+
+// ── ACT BUILDER ───────────────────────────────────────────────────────
+function updateChips(){
+  document.querySelectorAll('.chip').forEach(function(c){
+    c.classList.toggle('on', c.querySelector('input').checked);
+  });
+}
+
+var _actParams=null;
+// ── PREVIEW ───────────────────────────────────────────────────────────
+function buildActPreview(){
+  var p = collectActParams();
+  if(!p) return;
+  _actParams = p;
+
+  // Build preview HTML (same as print but lighter)
+  var req = getReq();
+  var TYPE_LABELS = {'НР':'Грызуны (наружные)','ВН':'Грызуны (внутренние)','АВ':'Амбарные','ИЛ':'Инсект. лампы','ИЛ-УФ':'Лампы УФ','ИЛ-КЛ':'Лампы с клеем','ДЗ':'Дезинсекция','ПТ':'Птицы'};
+  var TYPE_FULL = {'НР':'Наружные контейнеры (НР)','ВН':'Внутренние ловушки (ВН)','АВ':'Амбарные ловушки (АВ)','ИЛ':'Инсектицидные лампы','ИЛ-УФ':'УФ-лампы','ИЛ-КЛ':'Лампы с клеевой подложкой','ИЛ-УФ':'УФ-лампы (ИЛ-УФ)','ИЛ-КЛ':'Лампы с клеевой подложкой (ИЛ-КЛ)','ДЗ':'Дезинсекция (ДЗ)','ПТ':'Защита от птиц (ПТ)'};
+  var pestCo = req.name||(CP&&CP.company)||'—';
+  var warnings = p.entries.filter(function(e){return e.status&&!e.status.startsWith('✅');});
+
+  var groups = {};
+  p.entries.forEach(function(e){if(!groups[e.type])groups[e.type]=[];groups[e.type].push(e);});
+
+  var tables = Object.keys(groups).map(function(type){
+    var rows = groups[type].map(function(e){
+      var warn = !e.status.startsWith('✅') ? 'background:#fffbea;' : '';
+      return '<tr style="'+warn+'"><td style="border:1px solid #ddd;padding:4px 6px;font-weight:700">'+e.trapId+'</td>'+
+        '<td style="border:1px solid #ddd;padding:4px 6px">'+e.date+'</td>'+
+        '<td style="border:1px solid #ddd;padding:4px 6px">'+e.location+'</td>'+
+        '<td style="border:1px solid #ddd;padding:4px 6px">'+e.status+'</td>'+
+        '<td style="border:1px solid #ddd;padding:4px 6px;color:'+(e.comment?'#c85000':'#999')+'">'+( e.comment||'—')+'</td></tr>';
+    }).join('');
+    return '<div style="margin-bottom:14px"><div style="font-weight:700;color:#1B5E20;font-size:12px;margin-bottom:6px">'+( TYPE_FULL[type]||type)+'</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr>'+
+      '<th style="background:#1B5E20;color:#fff;padding:4px 6px;text-align:left">ID</th>'+
+      '<th style="background:#1B5E20;color:#fff;padding:4px 6px">Дата</th>'+
+      '<th style="background:#1B5E20;color:#fff;padding:4px 6px">Место</th>'+
+      '<th style="background:#1B5E20;color:#fff;padding:4px 6px">Статус</th>'+
+      '<th style="background:#1B5E20;color:#fff;padding:4px 6px">Комментарий</th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }).join('');
+
+  var warnBlock = warnings.length
+    ? '<div style="background:#fff8e1;border:2px solid #f0a000;border-radius:4px;padding:8px;margin-bottom:12px;font-size:11px"><b>⚠️ Отклонений: '+warnings.length+'</b> — '+warnings.map(function(e){return e.trapId;}).join(', ')+'</div>'
+    : '<div style="background:#e8f5e9;border:1px solid #4caf50;border-radius:4px;padding:8px;margin-bottom:12px;font-size:11px"><b>✓ HACCP:</b> Отклонений не выявлено</div>';
+
+  var html = '<div style="border-bottom:2px solid #1B5E20;padding-bottom:10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start">'+
+    '<div><div style="font-size:14px;font-weight:700;color:#1B5E20">АКТ МОНИТОРИНГА ВРЕДИТЕЛЕЙ</div>'+
+    '<div style="font-size:11px;color:#555">HACCP | Период: '+p.from+' — '+p.to+' | Техник: '+p.tech+'</div></div>'+
+    '<div style="font-size:10px;color:#555;text-align:right"><b style="color:#1B5E20">'+pestCo+'</b>'+(req.lic?'<br>'+req.lic:'')+'</div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:11px;background:#f5f5f5;padding:8px;border-radius:4px;margin-bottom:12px">'+
+    '<div><b>Объект:</b> '+[...new Set(p.entries.map(function(e){return e.company;}))].join(', ')+'</div>'+
+    '<div><b>Точек:</b> '+p.entries.length+'</div>'+
+    '<div><b>Отклонений:</b> '+(warnings.length||'0')+'</div></div>'+
+    warnBlock + tables +
+    '<div style="border-top:1px solid #ccc;padding-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:11px">'+
+    '<div><div style="font-weight:700;margin-bottom:4px">Исполнитель: '+p.tech+'</div><div style="height:36px;border-bottom:1px solid #333;width:160px"></div></div>'+
+    '<div><div style="font-weight:700;margin-bottom:4px">Ответственное лицо: '+(p.client||'_____________')+'</div><div style="height:36px;border-bottom:1px solid #333;width:160px"></div></div>'+
+    '</div>';
+
+  document.getElementById('act-preview-body').innerHTML = html;
+  var previewCard = document.getElementById('act-preview-card');
+  previewCard.style.display = 'block';
+
+  // Also show signatures
+  var sigCard = document.getElementById('act-sigs-card');
+  sigCard.style.display = 'block';
+  document.getElementById('ae-sig-tech-lbl').textContent = p.tech;
+  document.getElementById('ae-sig-client-lbl').textContent = p.client||'Ответственное лицо';
+  setTimeout(function(){
+    initSigPads();
+    var req2=getReq();
+    if(req2.sigMain){var c=document.getElementById('ae-sig-tech');var img=new Image();img.onload=function(){c.getContext('2d').drawImage(img,0,0,c.width,c.height);};img.src=req2.sigMain;}
+  },80);
+
+  previewCard.scrollIntoView({behavior:'smooth'});
+}
+
+// ── EMAIL MODAL ────────────────────────────────────────────────────────
+function showEmailModal(){
+  var p = collectActParams();
+  if(!p) return;
+  _actParams = p;
+  var req = getReq();
+  var pestCo = req.name||(CP&&CP.company)||'Pest Control';
+
+  document.getElementById('em-to').value = req.email||'';
+  document.getElementById('em-subject').value = 'Акт мониторинга HACCP ' + p.from + (p.to!==p.from?' — '+p.to:'');
+
+  var lines = [
+    'Уважаемый клиент,',
+    '',
+    'Направляем Вам акт мониторинга вредителей.',
+    '',
+    'СВОДКА:',
+    'Компания Pest Control: ' + pestCo,
+    'Техник: ' + p.tech,
+    'Период: ' + p.from + (p.to!==p.from?' — '+p.to:''),
+    'Объект(ы): ' + [...new Set(p.entries.map(function(e){return e.company;}))].join(', '),
+    'Точек осмотрено: ' + p.entries.length,
+    '',
+    'РЕЗУЛЬТАТЫ ОСМОТРА:'
+  ];
+
+  p.entries.forEach(function(e){
+    var ok = e.status && e.status.startsWith('✅');
+    lines.push((ok?'✓ ':'⚠ ') + e.trapId + ' [' + e.type + '] ' + e.date + ': ' + e.status + (e.comment?' — '+e.comment:''));
+  });
+
+  var issues = p.entries.filter(function(e){return !e.status.startsWith('✅');});
+  lines.push('');
+  if(issues.length){
+    lines.push('ОТКЛОНЕНИЯ HACCP: ' + issues.length + ' точек требуют внимания.');
+  } else {
+    lines.push('✓ HACCP: Отклонений не выявлено. Все точки в норме.');
+  }
+  lines.push('');
+  lines.push('С уважением,');
+  lines.push(p.tech + ', ' + pestCo);
+  if(req.phone) lines.push('Тел: ' + req.phone);
+  if(req.lic) lines.push('Лицензия: ' + req.lic);
+
+  document.getElementById('em-body').value = lines.join('\n');
+  document.getElementById('email-modal').classList.add('open');
+}
+
+function openMailClient(){
+  var to  = document.getElementById('em-to').value.trim();
+  var sub = encodeURIComponent(document.getElementById('em-subject').value);
+  var body = encodeURIComponent(document.getElementById('em-body').value);
+  window.location.href = 'mailto:' + to + '?subject=' + sub + '&body=' + body;
+}
+
+function copyEmailText(){
+  var text = document.getElementById('em-subject').value + String.fromCharCode(10,10) + document.getElementById('em-body').value;
+  navigator.clipboard.writeText(text).then(function(){
+    alert('✅ Текст скопирован в буфер обмена!');
+  }).catch(function(){
+    document.getElementById('em-body').select();
+    document.execCommand('copy');
+    alert('✅ Скопировано!');
+  });
+}
+
+// ── COLLECT PARAMS helper ──────────────────────────────────────────────
+function collectActParams(){
+  var from=document.getElementById('ae-from').value;
+  var to=document.getElementById('ae-to').value;
+  var obj=(document.getElementById('ae-obj').value||'').trim().toLowerCase();
+  var tech=document.getElementById('ae-tech').value.trim();
+  var client=document.getElementById('ae-client').value.trim();
+  var clientTitle=document.getElementById('ae-client-title').value.trim();
+  var types=[];
+  document.querySelectorAll('.chip input:checked').forEach(function(c){types.push(c.value);});
+  var mode=(document.querySelector('input[name="ae-mode"]:checked')||{}).value||'combined';
+  var err=document.getElementById('ae-err');
+  if(!from||!to||!tech){err.textContent='⚠️ Укажите период и ФИО техника';err.style.display='block';return null;}
+  var entries=histData.filter(function(h){
+    if(h.date<from||h.date>to) return false;
+    if(obj&&!h.company.toLowerCase().includes(obj)) return false;
+    if(types.length&&!types.includes(h.type)) return false;
+    return true;
+  });
+  if(!entries.length){err.textContent='⚠️ За выбранный период нет осмотров';err.style.display='block';return null;}
+  err.style.display='none';
+  return {from:from,to:to,tech:tech,client:client,clientTitle:clientTitle,types:types,mode:mode,entries:entries};
+}
+
+function buildAndPrintAct(){
+  var p = collectActParams();
+  if(!p) return;
+  _actParams = p;
+  var card=document.getElementById('act-sigs-card');
+  card.style.display='block';
+  document.getElementById('ae-sig-tech-lbl').textContent=p.tech;
+  document.getElementById('ae-sig-client-lbl').textContent=p.client||'Ответственное лицо';
+  setTimeout(function(){
+    initSigPads();
+    var req=getReq();
+    if(req.sigMain){var c=document.getElementById('ae-sig-tech');var img=new Image();img.onload=function(){c.getContext('2d').drawImage(img,0,0,c.width,c.height);};img.src=req.sigMain;}
+  },80);
+  card.scrollIntoView({behavior:'smooth'});
+}
+
+function printActFinal(){
+  if(!_actParams){alert('Сначала нажмите «Сформировать»');return;}
+  var sigT=getSig('ae-sig-tech');
+  var sigC=getSig('ae-sig-client');
+  var p=_actParams;
+  if(p.mode==='separate'){
+    p.types.forEach(function(type){
+      var te=p.entries.filter(function(e){return e.type===type;});
+      if(!te.length) return;
+      setTimeout(function(){printSingleAct(te,getReq(),sigT,sigC,p);},p.types.indexOf(type)*900);
+    });
+  } else {
+    printSingleAct(p.entries,getReq(),sigT,sigC,p);
+  }
+}
+
+// buildActEmail replaced by showEmailModal
+
+function printSingleAct(entries, req, sigT, sigC, p){
+  var typeGroups={};
+  entries.forEach(function(e){if(!typeGroups[e.type])typeGroups[e.type]=[];typeGroups[e.type].push(e);});
+  var pestCo=req.name||(CP&&CP.company)||'—';
+  var sigTH=sigT?'<img src="'+sigT+'" style="height:52px;display:block;margin-bottom:3px">':'<div style="height:52px;border-bottom:1px solid #333;width:190px;margin-bottom:3px"></div>';
+  var sigCH=sigC?'<img src="'+sigC+'" style="height:52px;display:block;margin-bottom:3px">':'<div style="height:52px;border-bottom:1px solid #333;width:190px;margin-bottom:3px"></div>';
+  var actNo='ACT-'+p.from.replace(/-/g,'')+(p.to!==p.from?'_'+p.to.replace(/-/g,''):'');
+  var warnings=entries.filter(function(e){return e.status&&!e.status.startsWith('✅');});
+  var warnBlock=warnings.length
+    ?'<div style="background:#fff8e1;border:2px solid #f0a000;border-radius:4pt;padding:7pt;margin:8pt 0;font-size:8.5pt"><b>⚠️ ОТКЛОНЕНИЯ HACCP ('+warnings.length+'):</b><br>'+warnings.map(function(e){return '• '+e.trapId+' ('+e.date+'): '+e.status+(e.comment?' — '+e.comment:'');}).join('<br>')+'</div>'
+    :'<div style="background:#e8f5e9;border:1px solid #4caf50;border-radius:4pt;padding:7pt;margin:8pt 0;font-size:8.5pt"><b>✓ HACCP:</b> Отклонений не выявлено.</div>';
+
+  var TYPE_FULL={'НР':'Наружные контейнеры (НР)','ВН':'Внутренние ловушки (ВН)','АВ':'Амбарные ловушки (АВ)','ИЛ':'Инсектицидные лампы','ИЛ-УФ':'УФ-лампы','ИЛ-КЛ':'Лампы с клеевой подложкой','ИЛ-УФ':'УФ-лампы (ИЛ-УФ)','ИЛ-КЛ':'Лампы с клеевой подложкой (ИЛ-КЛ)','ДЗ':'Дезинсекция (ДЗ)','ПТ':'Защита от птиц (ПТ)'};
+  var tables=Object.keys(typeGroups).map(function(type){
+    var rows=typeGroups[type].map(function(e){
+      var warn=e.status&&!e.status.startsWith('✅')?'background:#fff3cd;':'';
+      return '<tr style="'+warn+'"><td style="border:1px solid #ccc;padding:4pt 5pt;font-weight:700;font-size:8pt">'+e.trapId+'</td><td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt">'+e.date+'</td><td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt">'+e.location+'</td><td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt">'+e.status+'</td><td style="border:1px solid #ccc;padding:4pt 5pt;font-size:7.5pt;color:'+(e.comment?'#c85000':'#555')+'">'+e.comment+'</td></tr>';
+    }).join('');
+    return '<h3 style="font-size:10pt;color:#1B5E20;margin:14pt 0 5pt">'+( TYPE_FULL[type]||type)+'</h3><table style="width:100%;border-collapse:collapse"><thead><tr><th style="background:#1B5E20;color:#fff;padding:4pt 5pt;font-size:7.5pt;text-align:left">ID</th><th style="background:#1B5E20;color:#fff;padding:4pt 5pt;font-size:7.5pt">Дата</th><th style="background:#1B5E20;color:#fff;padding:4pt 5pt;font-size:7.5pt">Место</th><th style="background:#1B5E20;color:#fff;padding:4pt 5pt;font-size:7.5pt">Статус</th><th style="background:#1B5E20;color:#fff;padding:4pt 5pt;font-size:7.5pt">Комментарий</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  }).join('');
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Акт '+actNo+'</title><style>@page{size:A4;margin:13mm}body{font-family:Arial,sans-serif;font-size:9.5pt;color:#111}.hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1B5E20;padding-bottom:9pt;margin-bottom:10pt}.req{font-size:7.5pt;color:#555;line-height:1.7;text-align:right}.sigs{display:grid;grid-template-columns:1fr 1fr;gap:24pt;margin-top:18pt;padding-top:12pt;border-top:2px solid #1B5E20}.foot{font-size:6.5pt;color:#aaa;margin-top:12pt;border-top:1px solid #eee;padding-top:5pt}</style></head><body>'+
+    '<div class="hdr"><div><h1 style="font-size:13pt;color:#1B5E20;margin:0 0 3pt">АКТ МОНИТОРИНГА ВРЕДИТЕЛЕЙ</h1><div style="font-size:8.5pt;color:#555">Стандарт HACCP | Акт № '+actNo+' | '+p.from+(p.to!==p.from?' — '+p.to:'')+'</div></div>'+
+    '<div class="req"><b style="font-size:10pt;color:#1B5E20">'+pestCo+'</b><br>'+(req.bin?'БИН/ИНН: '+req.bin+'<br>':'')+(req.lic?'Лицензия: '+req.lic+'<br>':'')+(req.addr?req.addr+'<br>':'')+(req.phone?req.phone:'')+'</div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6pt;font-size:8.5pt;margin-bottom:8pt;padding:6pt;background:#f9f9f9;border-radius:4pt">'+
+    '<div><b>Объект(ы):</b> '+[...new Set(entries.map(function(e){return e.company;}))].join(', ')+'</div>'+
+    '<div><b>Период:</b> '+p.from+(p.to!==p.from?' — '+p.to:'')+'</div>'+
+    '<div><b>Техник:</b> '+p.tech+'</div>'+
+    '<div><b>Точек осмотрено:</b> '+entries.length+'</div>'+
+    '<div><b>Отклонений HACCP:</b> '+(warnings.length?'⚠️ '+warnings.length:'✓ Нет')+'</div>'+
+    '</div>'+warnBlock+tables+
+    '<div class="sigs">'+
+    '<div><div style="font-size:7.5pt;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:5pt">Исполнитель (Pest Control)</div>'+sigTH+'<div style="font-size:9pt">'+(p.tech||'__________________')+'</div><div style="font-size:7.5pt;color:#666">'+(req.techTitle||'Технический специалист')+'</div><div style="font-size:7.5pt;color:#666">Дата: '+p.to+'</div></div>'+
+    '<div><div style="font-size:7.5pt;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:5pt">Ответственное лицо объекта</div>'+sigCH+'<div style="font-size:9pt">'+(p.client||'__________________')+'</div><div style="font-size:7.5pt;color:#666">'+(p.clientTitle||'Должность')+'</div><div style="font-size:7.5pt;color:#666">Дата: ___________________</div></div>'+
+    '</div>'+
+    '<div class="foot">HACCP (ISO 22000) · '+pestCo+(req.lic?' · '+req.lic:'')+'</div></body></html>';
+
+  var w=window.open('','_blank','width=880,height=960');
+  if(w){w.document.write(html);w.document.close();w.focus();setTimeout(function(){w.print();},700);}
+}
+
+// ── QR ────────────────────────────────────────────────────────────────
+function renderQR(){
+  var s=(document.getElementById('qr-search').value||'').toLowerCase();
+  var list=trapsData.filter(function(t){return !s||(t.id+t.company+t.location).toLowerCase().includes(s);});
+  var grid=document.getElementById('qr-grid');
+  if(!list.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-ico">📱</div><div class="empty-title">Нет ловушек</div></div>';return;}
+  grid.innerHTML=list.map(function(t,i){return '<div class="qr-card" onclick="openHistModal(\''+escQ(t.id)+'\',\''+escQ(t.company)+'\')" id="qrc-'+i+'"><div id="qr-box-'+i+'"></div><div class="qr-card-id">'+t.id+'</div><div class="qr-card-loc">'+t.company+' · '+t.location+'</div></div>';}).join('');
+  list.forEach(function(t,i){
+    try{new QRCode(document.getElementById('qr-box-'+i),{text:t.id+'|'+t.company,width:120,height:120,colorDark:'#0f1410',colorLight:'#fff'});}catch(ex){}
+  });
+}
+
+function printAllQR(){
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>@page{size:A4;margin:10mm}body{font-family:Arial;}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10mm}.card{border:1px solid #ccc;border-radius:6px;padding:8px;text-align:center;page-break-inside:avoid}.id{font-weight:700;font-size:12pt;margin-top:5px}.loc{font-size:8pt;color:#666}</style></head><body><div class="grid">'+
+    trapsData.map(function(t){return '<div class="card"><div id="qr-'+t.id.replace(/\s/g,'_')+'"></div><div class="id">'+t.id+'</div><div class="loc">'+t.company+'</div></div>';}).join('')+
+    '</div><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script><script>'+
+    trapsData.map(function(t){return 'new QRCode(document.getElementById("qr-'+t.id.replace(/\s/g,'_')+'"),{text:"'+t.id+'|'+t.company+'",width:100,height:100});';}).join('')+
+    '<\/script></body></html>';
+  var w=window.open('','_blank');if(w){w.document.write(html);w.document.close();setTimeout(function(){w.print();},1000);}
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────────
+async function saveProfile(){
+  var n=document.getElementById('set-name').value;
+  var co=document.getElementById('set-co').value;
+  var ci=document.getElementById('set-city').value;
+  await sb.auth.updateUser({data:{name:n,company:co,city:ci}});
+  if(CP){CP.name=n;CP.company=co;CP.city=ci;}
+  document.getElementById('u-name').textContent=n;
+  document.getElementById('sb-co').textContent=co;
+  alert('✅ Сохранено!');
+}
+
+function loadReqToSettings(){
+  var req=getReq();
+  ['name','bin','lic','addr','phone','email','director','tech-title'].forEach(function(k){
+    var el=document.getElementById('req-'+k);
+    if(el&&req[k.replace('-','')]) el.value=req[k.replace('-','')]||req[k]||'';
+  });
+  // handle techTitle specially
+  var tt=document.getElementById('req-tech-title');
+  if(tt&&req.techTitle) tt.value=req.techTitle;
+  // load profile
+  if(CP){
+    var n=document.getElementById('set-name');if(n&&CP.name)n.value=CP.name;
+    var e=document.getElementById('set-email');if(e&&CP.email)e.value=CP.email;
+    var c=document.getElementById('set-co');if(c&&CP.company)c.value=CP.company;
+  }
+  // draw saved sig
+  setTimeout(function(){
+    if(req.sigMain){
+      var cv=document.getElementById('sig-main');
+      if(cv){var img=new Image();img.onload=function(){cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);};img.src=req.sigMain;}
+    }
+  },200);
+}
+
+function saveReq(){
+  var req={
+    name:document.getElementById('req-name').value.trim(),
+    bin:document.getElementById('req-bin').value.trim(),
+    lic:document.getElementById('req-lic').value.trim(),
+    addr:document.getElementById('req-addr').value.trim(),
+    phone:document.getElementById('req-phone').value.trim(),
+    email:document.getElementById('req-email').value.trim(),
+    director:document.getElementById('req-director').value.trim(),
+    techTitle:document.getElementById('req-tech-title').value.trim(),
+    sigMain:getSig('sig-main')||getReq().sigMain||null
+  };
+  saveReqData(req);
+  // Update prefills
+  document.getElementById('rs-co').value=req.name||document.getElementById('rs-co').value;
+  document.getElementById('rs-tech').value=req.director||document.getElementById('rs-tech').value;
+  document.getElementById('ae-tech').value=req.director||document.getElementById('ae-tech').value;
+  alert('✅ Реквизиты сохранены!');
+}
+
+async function changePass(){
+  var np=document.getElementById('np').value;
+  var cp2=document.getElementById('cp2').value;
+  if(np!==cp2){alert('Пароли не совпадают');return;}
+  if(np.length<6){alert('Минимум 6 символов');return;}
+  var r=await sb.auth.updateUser({password:np});
+  if(r.error){alert(r.error.message);return;}
+  alert('✅ Пароль изменён!');
+}
+
+// ── SIGNATURE PADS ───────────────────────────────────────────────────
+var _sigInited=new Set();
+function initSigPads(){
+  document.querySelectorAll('.sig-pad').forEach(function(c){
+    if(_sigInited.has(c.id)) return;
+    _sigInited.add(c.id);
+    var drawing=false, lx=0, ly=0;
+    var ctx=c.getContext('2d');
+    ctx.strokeStyle='#111'; ctx.lineWidth=2; ctx.lineCap='round';
+    function pos(e){
+      var r=c.getBoundingClientRect();
+      var t=e.touches?e.touches[0]:e;
+      return{x:(t.clientX-r.left)*(c.width/r.width),y:(t.clientY-r.top)*(c.height/r.height)};
+    }
+    function start(e){e.preventDefault();drawing=true;var p=pos(e);lx=p.x;ly=p.y;}
+    function move(e){e.preventDefault();if(!drawing)return;var p=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p.x,p.y);ctx.stroke();lx=p.x;ly=p.y;}
+    function stop(){drawing=false;}
+    c.addEventListener('mousedown',start);c.addEventListener('mousemove',move);c.addEventListener('mouseup',stop);c.addEventListener('mouseleave',stop);
+    c.addEventListener('touchstart',start,{passive:false});c.addEventListener('touchmove',move,{passive:false});c.addEventListener('touchend',stop);
+  });
+}
+
+function clearSig(id){var c=document.getElementById(id);if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);}
+function getSig(id){
+  var c=document.getElementById(id);if(!c)return null;
+  var b=document.createElement('canvas');b.width=c.width;b.height=c.height;
+  if(c.toDataURL()===b.toDataURL())return null;
+  return c.toDataURL('image/png');
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────────
+sb.auth.getSession().then(function(r){
+  if(r.data&&r.data.session){
+    CU=r.data.session.user;
+    CP={name:CU.user_metadata.name||'',company:CU.user_metadata.company||'',city:CU.user_metadata.city||'',email:CU.email,role:CU.user_metadata.role||'manager'};
+    showApp();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// ANALYTICS MODULE
+// ═══════════════════════════════════════════════════════════════
+var _anPeriod = 'quarter';
+var _anChart = null;
+
+function setAnPeriod(p, btn) {
+  _anPeriod = p;
+  document.querySelectorAll('#an-p-month,#an-p-quarter,#an-p-year').forEach(function(b) {
+    b.classList.remove('on');
+    b.style.background = '';
+    b.style.color = '';
+    b.style.borderColor = '';
+  });
+  btn.style.background = 'var(--gdim)';
+  btn.style.color = 'var(--green)';
+  btn.style.borderColor = 'var(--border2)';
+  renderAnalytics();
+}
+
+function getAnDateRange() {
+  var now = new Date();
+  var to = today;
+  var from;
+  if (_anPeriod === 'month') {
+    var f = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    from = f.toISOString().split('T')[0];
+  } else if (_anPeriod === 'quarter') {
+    var f = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+    from = f.toISOString().split('T')[0];
+  } else {
+    var f = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+    from = f.toISOString().split('T')[0];
+  }
+  // prev period (same length)
+  var diff = new Date(to) - new Date(from);
+  var prevTo = new Date(new Date(from) - 1);
+  var prevFrom = new Date(prevTo - diff);
+  return {
+    from: from, to: to,
+    prevFrom: prevFrom.toISOString().split('T')[0],
+    prevTo: prevTo.toISOString().split('T')[0]
+  };
+}
+
+function isIssue(status) {
+  return status && !status.startsWith('✅');
+}
+
+function renderAnalytics() {
+  if (!document.getElementById('p-analytics').classList.contains('on')) return;
+  var range = getAnDateRange();
+  var cur  = histData.filter(function(h){ return h.date >= range.from && h.date <= range.to; });
+  var prev = histData.filter(function(h){ return h.date >= range.prevFrom && h.date <= range.prevTo; });
+
+  renderAnMetrics(cur, prev, range);
+  renderAnBars(cur, prev);
+  renderAnTrend(range);
+  renderAnHotspots(cur);
+  renderAnObjects(cur, prev);
+  renderAnCoverage(cur, range);
+}
+
+// ── METRIC CARDS ──────────────────────────────────────────────
+function renderAnMetrics(cur, prev, range) {
+  var curIssues  = cur.filter(function(h){ return isIssue(h.status); }).length;
+  var prevIssues = prev.filter(function(h){ return isIssue(h.status); }).length;
+  var curTotal   = cur.length;
+  var prevTotal  = prev.length;
+  var curOk      = curTotal ? Math.round((curTotal - curIssues) / curTotal * 100) : 0;
+  var prevOk     = prevTotal ? Math.round((prevTotal - prevIssues) / prevTotal * 100) : 0;
+
+  // Unique sessions (obkhods)
+  var curSessions  = new Set(cur.filter(function(h){ return h.sessionId; }).map(function(h){ return h.sessionId; })).size;
+  var prevSessions = new Set(prev.filter(function(h){ return h.sessionId; }).map(function(h){ return h.sessionId; })).size;
+
+  // Repeat issues: same trapId appeared in issues 2+ times in period
+  var issueCounts = {};
+  cur.filter(function(h){ return isIssue(h.status); }).forEach(function(h){
+    var k = h.trapId + '|' + h.company;
+    issueCounts[k] = (issueCounts[k] || 0) + 1;
+  });
+  var repeats = Object.values(issueCounts).filter(function(v){ return v >= 2; }).length;
+  var prevIssueCounts = {};
+  prev.filter(function(h){ return isIssue(h.status); }).forEach(function(h){
+    var k = h.trapId + '|' + h.company;
+    prevIssueCounts[k] = (prevIssueCounts[k] || 0) + 1;
+  });
+  var prevRepeats = Object.values(prevIssueCounts).filter(function(v){ return v >= 2; }).length;
+
+  function delta(cur, prev, lower_is_better) {
+    if (!prev && !cur) return '';
+    var d = cur - prev;
+    if (d === 0) return '<span style="color:var(--t2);font-size:11px">без изменений</span>';
+    var better = lower_is_better ? d < 0 : d > 0;
+    var sign = d > 0 ? '+' : '';
+    return '<span style="font-size:11px;color:' + (better ? 'var(--green)' : 'var(--red)') + '">' +
+      (better ? '▲' : '▼') + ' ' + sign + d + ' vs прошлый период</span>';
+  }
+
+  var cards = [
+    { lbl: 'Отклонений', val: curIssues, delta: delta(curIssues, prevIssues, true) },
+    { lbl: '% без проблем', val: curOk + '%', delta: delta(curOk, prevOk, false) },
+    { lbl: 'Обходов', val: curSessions, delta: delta(curSessions, prevSessions, false) },
+    { lbl: 'Повторных случаев', val: repeats, delta: delta(repeats, prevRepeats, true) },
+    { lbl: 'Всего осмотров', val: curTotal, delta: '' },
+  ];
+
+  document.getElementById('an-metrics').innerHTML = cards.map(function(c) {
+    return '<div style="background:var(--bg3);border-radius:var(--r);padding:14px 16px">' +
+      '<div style="font-size:12px;color:var(--t2);margin-bottom:6px">' + c.lbl + '</div>' +
+      '<div style="font-size:24px;font-weight:700;color:var(--text)">' + c.val + '</div>' +
+      '<div style="margin-top:4px">' + c.delta + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+// ── TYPE BARS ─────────────────────────────────────────────────
+function renderAnBars(cur, prev) {
+  var types = ['НР','ВН','АВ','ИЛ-УФ','ИЛ-КЛ','ДЗ','ПТ'];
+  var TYPE_LABELS = {'НР':'Грызуны наружные','ВН':'Грызуны внутренние','АВ':'Амбарные','ИЛ-УФ':'Лампы УФ','ИЛ-КЛ':'Лампы с клеем','ДЗ':'Дезинсекция','ПТ':'Птицы'};
+
+  var html = '';
+  types.forEach(function(type) {
+    var cTotal = cur.filter(function(h){ return h.type === type; }).length;
+    var cIssue = cur.filter(function(h){ return h.type === type && isIssue(h.status); }).length;
+    var pTotal = prev.filter(function(h){ return h.type === type; }).length;
+    var pIssue = prev.filter(function(h){ return h.type === type && isIssue(h.status); }).length;
+    if (!cTotal && !pTotal) return;
+
+    var cPct  = cTotal ? Math.round(cIssue / cTotal * 100) : 0;
+    var pPct  = pTotal ? Math.round(pIssue / pTotal * 100) : 0;
+    var maxPct = Math.max(pPct, cPct, 1);
+    var improvement = pPct - cPct;
+    var deltaColor = improvement > 0 ? 'var(--green)' : improvement < 0 ? 'var(--red)' : 'var(--t2)';
+    var deltaText  = improvement > 0 ? '−' + improvement + ' пп' : improvement < 0 ? '+' + Math.abs(improvement) + ' пп' : '0';
+
+    html += '<div style="margin-bottom:14px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">' +
+        '<span style="font-size:13px;font-weight:500">' + TYPE_LABELS[type] + '</span>' +
+        '<span style="font-size:12px;font-weight:600;color:' + deltaColor + '">' + deltaText + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+        '<span style="font-size:11px;color:var(--t2);width:32px">Было</span>' +
+        '<div style="flex:1;height:16px;background:var(--bg3);border-radius:4px;overflow:hidden">' +
+          '<div style="height:100%;width:' + Math.round(pPct / maxPct * 100) + '%;background:var(--t3);border-radius:4px"></div>' +
+        '</div>' +
+        '<span style="font-size:11px;color:var(--t2);width:36px;text-align:right">' + pPct + '%</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<span style="font-size:11px;color:var(--t2);width:32px">Стало</span>' +
+        '<div style="flex:1;height:16px;background:var(--bg3);border-radius:4px;overflow:hidden">' +
+          '<div style="height:100%;width:' + Math.round(cPct / maxPct * 100) + '%;background:var(--green);border-radius:4px"></div>' +
+        '</div>' +
+        '<span style="font-size:11px;color:var(--t2);width:36px;text-align:right">' + cPct + '%</span>' +
+      '</div>' +
+    '</div>';
+  });
+
+  document.getElementById('an-bars').innerHTML = html || '<div style="color:var(--t2);font-size:13px">Недостаточно данных</div>';
+}
+
+// ── TREND CHART ───────────────────────────────────────────────
+function renderAnTrend(range) {
+  // Build monthly buckets between range.from and range.to
+  var months = [];
+  var d = new Date(range.from);
+  var end = new Date(range.to);
+  while (d <= end) {
+    months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+    d.setMonth(d.getMonth() + 1);
+  }
+  // Deduplicate
+  months = months.filter(function(v, i, a){ return a.indexOf(v) === i; });
+
+  var issueData = months.map(function(ym) {
+    return histData.filter(function(h){ return h.date.slice(0,7) === ym && isIssue(h.status); }).length;
+  });
+  var totalData = months.map(function(ym) {
+    return histData.filter(function(h){ return h.date.slice(0,7) === ym; }).length;
+  });
+
+  var labels = months.map(function(ym) {
+    var parts = ym.split('-');
+    var mn = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+    return mn[parseInt(parts[1]) - 1] + ' ' + parts[0].slice(2);
+  });
+
+  if (_anChart) { try { _anChart.destroy(); } catch(e){} _anChart = null; }
+  var ctx = document.getElementById('an-trend-chart');
+  if (!ctx || typeof Chart === 'undefined') return;
+  _anChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Отклонений',
+          data: issueData,
+          borderColor: '#e05252',
+          backgroundColor: 'rgba(224,82,82,0.08)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#e05252',
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Всего осмотров',
+          data: totalData,
+          borderColor: '#4ab660',
+          backgroundColor: 'rgba(74,182,96,0.06)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#4ab660',
+          borderDash: [5, 3],
+          fill: false,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#5a7060', font: { size: 11 }, autoSkip: false, maxRotation: 45 },
+          grid: { color: 'rgba(74,182,96,0.08)' }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#5a7060', font: { size: 11 }, stepSize: 1 },
+          grid: { color: 'rgba(74,182,96,0.08)' }
+        }
+      }
+    }
+  });
+}
+
+// ── HOTSPOTS & BEST ───────────────────────────────────────────
+function renderAnHotspots(cur) {
+  var counts = {};
+  cur.forEach(function(h) {
+    var k = h.trapId + '||' + h.company;
+    if (!counts[k]) counts[k] = { id: h.trapId, co: h.company, issues: 0, total: 0 };
+    counts[k].total++;
+    if (isIssue(h.status)) counts[k].issues++;
+  });
+  var arr = Object.values(counts);
+
+  // Hot spots: most issues
+  var hot = arr.filter(function(x){ return x.issues > 0; })
+    .sort(function(a,b){ return b.issues - a.issues; }).slice(0,5);
+  // Best: most inspections with 0 issues
+  var best = arr.filter(function(x){ return x.issues === 0 && x.total > 0; })
+    .sort(function(a,b){ return b.total - a.total; }).slice(0,5);
+
+  function rowHtml(x, isBad) {
+    var pct = x.total ? Math.round(x.issues / x.total * 100) : 0;
+    var badge = isBad
+      ? '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--rdim);color:var(--red)">' + x.issues + ' из ' + x.total + '</span>'
+      : '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--gdim);color:var(--green)">✓ ' + x.total + ' обходов</span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">' +
+      '<div><div style="font-size:13px;font-weight:500">' + x.id + '</div><div style="font-size:11px;color:var(--t2)">' + x.co + '</div></div>' +
+      badge + '</div>';
+  }
+
+  var hotEl = document.getElementById('an-hotspots');
+  hotEl.innerHTML = hot.length
+    ? hot.map(function(x){ return rowHtml(x, true); }).join('')
+    : '<div style="color:var(--t2);font-size:13px">Нет отклонений — отлично!</div>';
+
+  var bestEl = document.getElementById('an-best');
+  bestEl.innerHTML = best.length
+    ? best.map(function(x){ return rowHtml(x, false); }).join('')
+    : '<div style="color:var(--t2);font-size:13px">Нет данных</div>';
+}
+
+// ── OBJECTS ───────────────────────────────────────────────────
+function renderAnObjects(cur, prev) {
+  var objs = {};
+  cur.forEach(function(h) {
+    if (!objs[h.company]) objs[h.company] = { total: 0, issues: 0 };
+    objs[h.company].total++;
+    if (isIssue(h.status)) objs[h.company].issues++;
+  });
+  var prevObjs = {};
+  prev.forEach(function(h) {
+    if (!prevObjs[h.company]) prevObjs[h.company] = { total: 0, issues: 0 };
+    prevObjs[h.company].total++;
+    if (isIssue(h.status)) prevObjs[h.company].issues++;
+  });
+
+  var arr = Object.keys(objs).map(function(co) {
+    var c = objs[co];
+    var p = prevObjs[co] || { total: 0, issues: 0 };
+    var curPct  = c.total ? Math.round((c.total - c.issues) / c.total * 100) : 0;
+    var prevPct = p.total ? Math.round((p.total - p.issues) / p.total * 100) : 0;
+    return { co: co, curPct: curPct, prevPct: prevPct, total: c.total, issues: c.issues };
+  }).sort(function(a,b){ return b.curPct - a.curPct; });
+
+  if (!arr.length) {
+    document.getElementById('an-objects').innerHTML = '<div style="color:var(--t2);font-size:13px">Нет данных</div>';
+    return;
+  }
+
+  var html = arr.map(function(o) {
+    var delta = o.curPct - o.prevPct;
+    var deltaHtml = o.prevPct
+      ? '<span style="font-size:11px;color:' + (delta >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (delta >= 0 ? '▲' : '▼') + ' ' + Math.abs(delta) + ' пп</span>'
+      : '';
+    var barW = o.curPct;
+    var barColor = o.curPct >= 80 ? 'var(--green)' : o.curPct >= 50 ? 'var(--amber)' : 'var(--red)';
+    return '<div style="margin-bottom:12px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
+        '<span style="font-size:13px;font-weight:500">' + o.co + '</span>' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          deltaHtml +
+          '<span style="font-size:13px;font-weight:700;color:' + barColor + '">' + o.curPct + '%</span>' +
+          '<span style="font-size:11px;color:var(--t2)">без проблем</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden">' +
+        '<div style="height:100%;width:' + barW + '%;background:' + barColor + ';border-radius:4px;transition:width .5s"></div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--t3);margin-top:3px">' + o.total + ' осмотров · ' + o.issues + ' отклонений</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('an-objects').innerHTML = html;
+}
+
+// ── COVERAGE ──────────────────────────────────────────────────
+function renderAnCoverage(cur, range) {
+  // Build weeks in period
+  var sessions = {};
+  cur.forEach(function(h) {
+    if (h.sessionId) {
+      if (!sessions[h.sessionId]) sessions[h.sessionId] = { date: h.date, count: 0 };
+      sessions[h.sessionId].count++;
+    }
+  });
+  var sesArr = Object.values(sessions).sort(function(a,b){ return a.date.localeCompare(b.date); });
+
+  // Trap coverage per session
+  var trapCount = trapsData.length;
+  var el = document.getElementById('an-coverage');
+
+  if (!sesArr.length) {
+    el.innerHTML = '<div style="color:var(--t2);font-size:13px">Нет обходов за период. Сделайте обход в разделе «Обход».</div>';
+    return;
+  }
+
+  var html = '<div style="font-size:12px;color:var(--t2);margin-bottom:10px">Каждый обход = одна строка. Показывает охват ловушек.</div>';
+  html += sesArr.map(function(s) {
+    var pct = trapCount ? Math.round(s.count / trapCount * 100) : 100;
+    pct = Math.min(pct, 100);
+    var barColor = pct >= 90 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+      '<span style="font-size:12px;color:var(--t2);width:90px;flex-shrink:0">' + s.date + '</span>' +
+      '<div style="flex:1;height:12px;background:var(--bg3);border-radius:4px;overflow:hidden">' +
+        '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:4px"></div>' +
+      '</div>' +
+      '<span style="font-size:12px;color:var(--text);width:50px;text-align:right;flex-shrink:0">' + s.count + (trapCount ? ' / ' + trapCount : '') + '</span>' +
+    '</div>';
+  }).join('');
+
+  el.innerHTML = html;
+}
+
+// ── PRINT REPORT ─────────────────────────────────────────────
+function printAnalyticsReport() {
+  var range = getAnDateRange();
+  var cur  = histData.filter(function(h){ return h.date >= range.from && h.date <= range.to; });
+  var prev = histData.filter(function(h){ return h.date >= range.prevFrom && h.date <= range.prevTo; });
+  var req = getReq();
+
+  var curIssues = cur.filter(function(h){ return isIssue(h.status); }).length;
+  var curTotal  = cur.length;
+  var curOk     = curTotal ? Math.round((curTotal - curIssues) / curTotal * 100) : 0;
+  var prevIssues = prev.filter(function(h){ return isIssue(h.status); }).length;
+  var prevOk     = prev.length ? Math.round((prev.length - prevIssues) / prev.length * 100) : 0;
+
+  var TYPE_LABELS = {'НР':'Грызуны (наружные)','ВН':'Грызуны (внутренние)','АВ':'Амбарные ловушки','ИЛ':'Инсектицидные лампы','ИЛ-УФ':'УФ-лампы','ИЛ-КЛ':'Лампы с клеевой подложкой','ДЗ':'Дезинсекция','ПТ':'Защита от птиц'};
+  var typeRows = ['НР','ВН','АВ','ИЛ-УФ','ИЛ-КЛ','ДЗ','ПТ'].map(function(type) {
+    var ct = cur.filter(function(h){ return h.type===type; }).length;
+    var ci = cur.filter(function(h){ return h.type===type && isIssue(h.status); }).length;
+    var pt = prev.filter(function(h){ return h.type===type; }).length;
+    var pi = prev.filter(function(h){ return h.type===type && isIssue(h.status); }).length;
+    if (!ct && !pt) return '';
+    var cp = ct ? Math.round(ci/ct*100) : 0;
+    var pp = pt ? Math.round(pi/pt*100) : 0;
+    var diff = pp - cp;
+    return '<tr><td style="padding:5pt 7pt;border:1px solid #ddd;font-size:9pt">' + TYPE_LABELS[type] + '</td>' +
+      '<td style="padding:5pt 7pt;border:1px solid #ddd;font-size:9pt;text-align:center">' + pp + '%</td>' +
+      '<td style="padding:5pt 7pt;border:1px solid #ddd;font-size:9pt;text-align:center">' + cp + '%</td>' +
+      '<td style="padding:5pt 7pt;border:1px solid #ddd;font-size:9pt;text-align:center;color:' + (diff>0?'#2E7D32':diff<0?'#c62828':'#555') + '">' +
+        (diff>0?'▲ +'+diff+' пп':diff<0?'▼ '+diff+' пп':'—') + '</td></tr>';
+  }).filter(Boolean).join('');
+
+  var periodLabel = { month:'месяц', quarter:'квартал', year:'год' }[_anPeriod];
+  var pestCo = req.name || (CP && CP.company) || 'Pest Control';
+
+  // Hot spots block
+  var issueCounts2 = {};
+  cur.filter(function(h){ return isIssue(h.status); }).forEach(function(h){
+    var k = h.trapId + '||' + h.company;
+    if(!issueCounts2[k]) issueCounts2[k] = {id:h.trapId, co:h.company, n:0};
+    issueCounts2[k].n++;
+  });
+  var hotArr = Object.values(issueCounts2).sort(function(a,b){return b.n-a.n;}).slice(0,8);
+  var hotRows = hotArr.map(function(x){
+    return '<tr><td style="border:1px solid #ddd;padding:4pt 7pt;font-size:9pt;font-weight:700">'+x.id+'</td>'+
+      '<td style="border:1px solid #ddd;padding:4pt 7pt;font-size:9pt">'+x.co+'</td>'+
+      '<td style="border:1px solid #ddd;padding:4pt 7pt;font-size:9pt;text-align:center;color:#c62828;font-weight:700">'+x.n+'</td></tr>';
+  }).join('');
+  var hotBlock = hotArr.length ? (
+    '<h2 style="font-size:11pt;color:#c62828;margin:14pt 0 6pt">⚠ Проблемные точки</h2>'+
+    '<table><thead><tr><th>ID точки</th><th>Объект</th><th>Отклонений</th></tr></thead><tbody>'+hotRows+'</tbody></table>'
+  ) : '<div style="background:#e8f5e9;border:1px solid #4caf50;border-radius:4pt;padding:7pt;margin:10pt 0;font-size:9pt"><b>✓</b> Проблемных точек не выявлено за период.</div>';
+
+  // Objects efficiency block
+  var objs2 = {};
+  cur.forEach(function(h){
+    if(!objs2[h.company]) objs2[h.company]={total:0,issues:0};
+    objs2[h.company].total++;
+    if(isIssue(h.status)) objs2[h.company].issues++;
+  });
+  var prevObjs2 = {};
+  prev.forEach(function(h){
+    if(!prevObjs2[h.company]) prevObjs2[h.company]={total:0,issues:0};
+    prevObjs2[h.company].total++;
+    if(isIssue(h.status)) prevObjs2[h.company].issues++;
+  });
+  var objRows2 = Object.keys(objs2).map(function(co){
+    var c=objs2[co]; var p2=prevObjs2[co]||{total:0,issues:0};
+    var cp=Math.round((c.total-c.issues)/c.total*100);
+    var pp=p2.total?Math.round((p2.total-p2.issues)/p2.total*100):null;
+    var diff2=pp!==null?cp-pp:null;
+    return '<tr><td style="border:1px solid #ddd;padding:4pt 7pt;font-size:9pt;font-weight:700">'+co+'</td>'+
+      '<td style="border:1px solid #ddd;padding:4pt 7pt;font-size:9pt;text-align:center">'+c.total+'</td>'+
+      '<td style="border:1px solid #ddd;padding:4pt 7pt;font-size:9pt;text-align:center">'+c.issues+'</td>'+
+      '<td style="border:1px solid #ddd;padding:4pt 7pt;font-size:9pt;text-align:center;font-weight:700;color:'+(cp>=80?'#2E7D32':cp>=50?'#E65100':'#c62828')+'">'+cp+'%</td>'+
+      '<td style="border:1px solid #ddd;padding:4pt 7pt;font-size:9pt;text-align:center;color:'+(diff2===null?'#555':diff2>=0?'#2E7D32':'#c62828')+'">'+(diff2===null?'—':diff2>=0?'▲ +'+diff2+' пп':'▼ '+diff2+' пп')+'</td></tr>';
+  }).join('');
+  var objBlock = '<h2 style="font-size:11pt;color:#1B5E20;margin:14pt 0 6pt">Эффективность по объектам</h2>'+
+    '<table><thead><tr><th>Объект</th><th>Осмотров</th><th>Отклонений</th><th>% без проблем</th><th>Изменение</th></tr></thead><tbody>'+objRows2+'</tbody></table>';
+
+  // Signature block
+  var techName = cur.length && cur[cur.length-1].techName ? cur[cur.length-1].techName : (req.director||(CP&&CP.name)||'');
+  var signBlock =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:30pt;margin-top:20pt;padding-top:14pt;border-top:2px solid #1B5E20">'+
+      '<div><div style="font-size:7.5pt;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:5pt">Составил (Pest Control)</div>'+
+        '<div style="height:50pt;border-bottom:1px solid #333;width:200pt;margin-bottom:4pt"></div>'+
+        '<div style="font-size:9pt">'+techName+'</div>'+
+        '<div style="font-size:7.5pt;color:#666">'+(req.techTitle||'Технический специалист')+'</div>'+
+        '<div style="font-size:7.5pt;color:#666">Дата: '+today+'</div>'+
+      '</div>'+
+      '<div><div style="font-size:7.5pt;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:5pt">Принял (Ответственное лицо)</div>'+
+        '<div style="height:50pt;border-bottom:1px solid #333;width:200pt;margin-bottom:4pt"></div>'+
+        '<div style="font-size:9pt">___________________________</div>'+
+        '<div style="font-size:7.5pt;color:#666">Должность</div>'+
+        '<div style="font-size:7.5pt;color:#666">Дата: ___________________</div>'+
+      '</div>'+
+    '</div>';
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Отчёт эффективности</title>' +
+    '<style>@page{size:A4;margin:14mm}body{font-family:Arial,sans-serif;font-size:9.5pt;color:#111}' +
+    'h1{font-size:14pt;color:#1B5E20;margin:0 0 3pt}' +
+    '.hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1B5E20;padding-bottom:9pt;margin-bottom:12pt}' +
+    '.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8pt;margin-bottom:12pt}' +
+    '.kpi{background:#f5f5f5;border-radius:6pt;padding:8pt;text-align:center}' +
+    '.kpi-val{font-size:20pt;font-weight:700;color:#1B5E20}' +
+    '.kpi-lbl{font-size:7.5pt;color:#555;margin-top:2pt}' +
+    '.kpi-d{font-size:8pt;margin-top:3pt}' +
+    'table{width:100%;border-collapse:collapse;margin-bottom:12pt}' +
+    'th{background:#1B5E20;color:#fff;padding:4pt 7pt;font-size:8pt;text-align:left}' +
+    '.foot{font-size:6.5pt;color:#aaa;margin-top:14pt;border-top:1px solid #eee;padding-top:5pt}' +
+    '</style></head><body>' +
+    '<div class="hdr">' +
+      '<div><h1>ОТЧЁТ ЭФФЕКТИВНОСТИ PEST CONTROL</h1>' +
+        '<div style="font-size:8.5pt;color:#555">Период: ' + range.from + ' — ' + range.to + ' (' + periodLabel + ') | Сформировано: ' + today + '</div>' +
+      '</div>' +
+      '<div style="text-align:right;font-size:7.5pt;color:#555;line-height:1.7">' +
+        '<b style="font-size:10pt;color:#1B5E20">' + pestCo + '</b><br>' +
+        (req.lic ? 'Лицензия: ' + req.lic + '<br>' : '') +
+        (req.phone ? req.phone : '') +
+      '</div>' +
+    '</div>' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-val">' + curIssues + '</div><div class="kpi-lbl">Отклонений</div><div class="kpi-d" style="color:' + (curIssues <= prevIssues ? '#2E7D32':'#c62828') + '">' + (prevIssues ? 'было ' + prevIssues : '—') + '</div></div>' +
+      '<div class="kpi"><div class="kpi-val">' + curOk + '%</div><div class="kpi-lbl">Без проблем</div><div class="kpi-d" style="color:' + (curOk >= prevOk ? '#2E7D32':'#c62828') + '">' + (prevOk ? 'было ' + prevOk + '%' : '—') + '</div></div>' +
+      '<div class="kpi"><div class="kpi-val">' + curTotal + '</div><div class="kpi-lbl">Осмотров</div><div class="kpi-d" style="color:#555">за период</div></div>' +
+      '<div class="kpi"><div class="kpi-val">' + trapsData.length + '</div><div class="kpi-lbl">Ловушек</div><div class="kpi-d" style="color:#555">всего</div></div>' +
+    '</div>' +
+    '<table><thead><tr><th>Тип ловушек</th><th>% проблем (было)</th><th>% проблем (стало)</th><th>Изменение</th></tr></thead><tbody>' + typeRows + '</tbody></table>' +
+    hotBlock + objBlock + signBlock +
+    '<div class="foot">HACCP (ISO 22000) · ' + pestCo + (req.lic ? ' · ' + req.lic : '') + ' · Сформировано автоматически · ' + today + '</div>' +
+    '</body></html>';
+
+  var w = window.open('', '_blank', 'width=860,height=960');
+  if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(function(){ w.print(); }, 700); }
+}
+
+// ── ANALYTICS EMAIL ────────────────────────────────────────────────────
+function emailAnalyticsReport() {
+  var range = getAnDateRange();
+  var cur   = histData.filter(function(h){ return h.date >= range.from && h.date <= range.to; });
+  var prev  = histData.filter(function(h){ return h.date >= range.prevFrom && h.date <= range.prevTo; });
+  var req   = getReq();
+  var pestCo = req.name || (CP && CP.company) || 'Pest Control';
+  var periodLabel = { month:'месяц', quarter:'квартал', year:'год' }[_anPeriod];
+
+  var curIssues  = cur.filter(function(h){ return isIssue(h.status); }).length;
+  var curTotal   = cur.length;
+  var curOk      = curTotal ? Math.round((curTotal - curIssues) / curTotal * 100) : 0;
+  var prevIssues = prev.filter(function(h){ return isIssue(h.status); }).length;
+  var prevOk     = prev.length ? Math.round((prev.length - prevIssues) / prev.length * 100) : 0;
+
+  // Hot spots
+  var issueCounts = {};
+  cur.filter(function(h){ return isIssue(h.status); }).forEach(function(h){
+    var k = h.trapId + ' (' + h.company + ')';
+    issueCounts[k] = (issueCounts[k]||0) + 1;
+  });
+  var hotList = Object.keys(issueCounts).sort(function(a,b){ return issueCounts[b]-issueCounts[a]; }).slice(0,5);
+
+  // Objects
+  var objs = {};
+  cur.forEach(function(h){
+    if(!objs[h.company]) objs[h.company] = {total:0, issues:0};
+    objs[h.company].total++;
+    if(isIssue(h.status)) objs[h.company].issues++;
+  });
+
+  var TYPE_LABELS = {'НР':'Грызуны наружные','ВН':'Грызуны внутренние','АВ':'Амбарные','ИЛ-УФ':'Лампы УФ','ИЛ-КЛ':'Лампы с клеем','ДЗ':'Дезинсекция','ПТ':'Птицы'};
+
+  var lines = [
+    'ОТЧЁТ ЭФФЕКТИВНОСТИ PEST CONTROL',
+    '=====================================',
+    'Компания: ' + pestCo,
+    'Период: ' + range.from + ' — ' + range.to + ' (' + periodLabel + ')',
+    'Сформировано: ' + today,
+    (req.lic ? 'Лицензия: ' + req.lic : ''),
+    '',
+    'КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ:',
+    '─────────────────────',
+    'Отклонений:      ' + curIssues + (prevIssues ? '  (было: ' + prevIssues + ')' : ''),
+    'Без проблем:     ' + curOk + '%' + (prevOk ? '  (было: ' + prevOk + '%)' : ''),
+    'Всего осмотров:  ' + curTotal,
+    'Ловушек всего:   ' + trapsData.length,
+    '',
+    'ПО ТИПАМ ЛОВУШЕК:',
+    '─────────────────────'
+  ];
+
+  ['НР','ВН','АВ','ИЛ-УФ','ИЛ-КЛ','ДЗ','ПТ'].forEach(function(type){
+    var ct = cur.filter(function(h){ return h.type===type; }).length;
+    var ci = cur.filter(function(h){ return h.type===type && isIssue(h.status); }).length;
+    var pt = prev.filter(function(h){ return h.type===type; }).length;
+    var pi = prev.filter(function(h){ return h.type===type && isIssue(h.status); }).length;
+    if(!ct && !pt) return;
+    var cp = ct ? Math.round(ci/ct*100) : 0;
+    var pp = pt ? Math.round(pi/pt*100) : 0;
+    var diff = pp - cp;
+    var arrow = diff > 0 ? '▲ улучшение +'+diff+' пп' : diff < 0 ? '▼ ухудшение '+diff+' пп' : 'без изменений';
+    lines.push((TYPE_LABELS[type]||type) + ': было ' + pp + '% → стало ' + cp + '% проблем  [' + arrow + ']');
+  });
+
+  if(hotList.length) {
+    lines.push('');
+    lines.push('ПРОБЛЕМНЫЕ ТОЧКИ:');
+    lines.push('─────────────────────');
+    hotList.forEach(function(k){ lines.push('⚠ ' + k + ' — ' + issueCounts[k] + ' отклонений'); });
+  }
+
+  lines.push('');
+  lines.push('ЭФФЕКТИВНОСТЬ ПО ОБЪЕКТАМ:');
+  lines.push('─────────────────────');
+  Object.keys(objs).forEach(function(co){
+    var o = objs[co];
+    var pct = Math.round((o.total - o.issues) / o.total * 100);
+    lines.push(co + ': ' + pct + '% без проблем (' + o.total + ' осмотров, ' + o.issues + ' отклонений)');
+  });
+
+  lines.push('');
+  lines.push('─────────────────────');
+  lines.push('HACCP (ISO 22000) · ' + pestCo);
+
+  // Populate and open email modal (reuse existing modal)
+  var to = req.email || '';
+  document.getElementById('em-to').value = to;
+  document.getElementById('em-subject').value = 'Отчёт эффективности Pest Control ' + range.from + ' — ' + range.to;
+  document.getElementById('em-body').value = lines.filter(Boolean).join('\n');
+  document.getElementById('email-modal').classList.add('open');
+}
+
+
+</script>
+</body>
+</html>
