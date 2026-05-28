@@ -31,24 +31,7 @@ input,textarea,select,button{font-family:var(--font)}
 .screen{display:none;min-height:100vh;flex-direction:column}
 .screen.active{display:flex}
 
-/* ── LOGIN ── */
-#s-login{align-items:center;justify-content:center;padding:20px}
-.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:36px 30px;width:380px;max-width:100%}
-.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:28px}
-.logo-ico{width:46px;height:46px;background:var(--gdim);border:1px solid var(--border2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
-.logo-name{font-size:20px;font-weight:700}
-.logo-ver{font-size:11px;color:var(--t3);margin-top:1px}
-.ltabs{display:flex;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:22px}
-.ltab{flex:1;padding:9px;border-radius:8px;border:none;background:none;color:var(--t2);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font)}
-.ltab.on{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:11px;color:var(--t2);font-weight:600;letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px}
-.field input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s}
-.field input:focus{border-color:var(--green)}
-.btn-main{width:100%;background:var(--green);color:#0a0f0b;border:none;border-radius:var(--r);padding:13px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s}
-.btn-main:hover{opacity:.9}
-.err{color:var(--red);font-size:12px;padding:8px 10px;background:var(--rdim);border-radius:8px;margin-top:10px;display:none}
-.ok{color:var(--green);font-size:12px;padding:8px 10px;background:var(--gdim);border-radius:8px;margin-top:10px;display:none}
+/* login CSS removed */
 
 /* ── APP SHELL ── */
 #s-app{flex-direction:row}
@@ -231,37 +214,10 @@ input,textarea,select,button{font-family:var(--font)}
 </head>
 <body>
 
-<!-- ═══ LOGIN ═══ -->
-<div class="screen active" id="s-login">
-  <div class="login-box">
-    <div id="qr-login-hint" style="display:none;background:rgba(74,182,96,0.12);border:1px solid rgba(74,182,96,0.3);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#4ab660;line-height:1.5"><b>📍 QR-код считан.</b><br>Войдите — информация по ловушке откроется автоматически.</div>
-    <div class="logo-row">
-      <div class="logo-ico">🪲</div>
-      <div><div class="logo-name">Pest Control</div><div class="logo-ver">МОНИТОРИНГ v4.0</div></div>
-    </div>
-    <div class="ltabs">
-      <button class="ltab on" onclick="showLTab('in')">Войти</button>
-      <button class="ltab" onclick="showLTab('up')">Регистрация</button>
-    </div>
-    <div id="lt-in">
-      <div class="field"><label>Email</label><input type="email" id="l-email" placeholder="you@example.com"></div>
-      <div class="field"><label>Пароль</label><input type="password" id="l-pass" placeholder="••••••••"></div>
-      <button class="btn-main" onclick="doLogin()">Войти</button>
-    </div>
-    <div id="lt-up" style="display:none">
-      <div class="field"><label>Ваше имя</label><input type="text" id="r-name" placeholder="Иван Иванов"></div>
-      <div class="field"><label>Email</label><input type="email" id="r-email" placeholder="you@example.com"></div>
-      <div class="field"><label>Пароль</label><input type="password" id="r-pass" placeholder="Минимум 6 символов"></div>
-      <div class="field"><label>Компания</label><input type="text" id="r-co" placeholder="ТОО «ПестКонтроль»"></div>
-      <button class="btn-main" onclick="doRegister()">Создать аккаунт</button>
-    </div>
-    <div class="err" id="l-err"></div>
-    <div class="ok" id="l-ok"></div>
-  </div>
-</div>
+<!-- Login removed — no auth required -->
 
 <!-- ═══ APP ═══ -->
-<div class="screen" id="s-app">
+<div class="screen active" id="s-app">
 
   <!-- SIDEBAR -->
   <div class="sidebar">
@@ -283,7 +239,7 @@ input,textarea,select,button{font-family:var(--font)}
     <div class="sb-user">
       <div class="u-av" id="u-av">?</div>
       <div class="u-name" id="u-name">—</div>
-      <button class="btn-out" onclick="doLogout()" title="Выйти">↩</button>
+      
     </div>
   </div>
 
@@ -941,58 +897,20 @@ function saveHist(){ localStorage.setItem('pc_hist', JSON.stringify(histData)); 
 function getReq(){ return JSON.parse(localStorage.getItem('pc_req')||'{}'); }
 function saveReqData(r){ localStorage.setItem('pc_req', JSON.stringify(r)); }
 
-// ── AUTH ──────────────────────────────────────────────────────────────
-function showLTab(t){
-  document.getElementById('lt-in').style.display = t==='in'?'block':'none';
-  document.getElementById('lt-up').style.display = t==='up'?'block':'none';
-  document.querySelectorAll('.ltab').forEach(function(b,i){b.classList.toggle('on', (t==='in'&&i===0)||(t==='up'&&i===1));});
-}
-
-async function doLogin(){
-  var e=document.getElementById('l-email').value.trim();
-  var p=document.getElementById('l-pass').value;
-  var err=document.getElementById('l-err');
-  err.style.display='none';
-  if(!e||!p){err.textContent='Заполните email и пароль';err.style.display='block';return;}
-  try{
-    var r=await sb.auth.signInWithPassword({email:e,password:p});
-    if(r.error)throw r.error;
-    CU=r.data.user;
-    CP={name:CU.user_metadata.name||'',company:CU.user_metadata.company||'',city:CU.user_metadata.city||'',email:CU.email,role:CU.user_metadata.role||'manager'};
-    showApp();
-  }catch(ex){err.textContent=ex.message||'Ошибка входа';err.style.display='block';}
-}
-
-async function doRegister(){
-  var n=document.getElementById('r-name').value.trim();
-  var e=document.getElementById('r-email').value.trim();
-  var p=document.getElementById('r-pass').value;
-  var co=document.getElementById('r-co').value.trim();
-  var err=document.getElementById('l-err'), ok=document.getElementById('l-ok');
-  err.style.display='none'; ok.style.display='none';
-  if(!n||!e||!p){err.textContent='Заполните все поля';err.style.display='block';return;}
-  try{
-    var r=await sb.auth.signUp({email:e,password:p,options:{data:{name:n,company:co,role:'manager'}}});
-    if(r.error)throw r.error;
-    ok.textContent='Аккаунт создан! Проверьте email для подтверждения.';ok.style.display='block';
-  }catch(ex){err.textContent=ex.message;err.style.display='block';}
-}
-
-async function doLogout(){
-  await sb.auth.signOut();
-  CU=null;CP=null;
-  document.getElementById('s-app').classList.remove('active');
-  document.getElementById('s-login').classList.add('active');
-}
+// ── NO AUTH — app works without login ──
+function doLogout(){}
+function showLTab(){}
+function doLogin(){}
+function doRegister(){}
 
 // ── APP INIT ─────────────────────────────────────────────────────────
 function showApp(){
-  document.getElementById('s-login').classList.remove('active');
-  document.getElementById('s-app').classList.add('active');
-  var n=CP&&CP.name?CP.name:'';
-  var co=CP&&CP.company?CP.company:'';
-  document.getElementById('u-name').textContent=n||CP.email||'—';
-  document.getElementById('u-av').textContent=(n||'?')[0].toUpperCase();
+  var req=getReq();
+  var n=req.director||req.name||'Пользователь';
+  var co=req.name||'Pest Control';
+  CP={name:n, company:co, email:req.email||''};
+  document.getElementById('u-name').textContent=n;
+  document.getElementById('u-av').textContent=(n||'П')[0].toUpperCase();
   document.getElementById('sb-co').textContent=co;
   var parts=n.trim().split(' ');var first=parts.length>=2?parts[parts.length-1]:parts[0];document.getElementById('home-greeting').textContent='Привет, '+(first||'!')+'!';
   var days=['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
@@ -1054,6 +972,8 @@ function saveTrap(){
   if(trapsData.some(function(t){return t.id===id&&t.company===co;})){alert('Ловушка «'+id+'» в «'+co+'» уже существует');return;}
   trapsData.push({id:id, type:type, company:co, location:loc, created:today});
   saveTraps();
+  // Also save to Supabase so QR page can read it
+  sb.from('pc_traps').upsert({trap_id:id, type:type, company:co, location:loc, created_date:today, user_email:''}, {onConflict:'trap_id,company'}).then(function(){});
   document.getElementById('nt-id').value='';
   document.getElementById('nt-co').value='';
   document.getElementById('nt-loc').value='Периметр';
@@ -1340,13 +1260,21 @@ function finishRound(){
   list.forEach(function(t){
     var key=t.id+'|'+t.company;
     var state=_roundState[key]||{status:'✅ Всё в порядке',comment:''};
-    histData.push({
+    var entry = {
       trapId:t.id, company:t.company, type:t.type, location:t.location||'Периметр',
       date:date, status:state.status, comment:state.comment,
       pestCo:co, techName:tech, techTitle:req.techTitle||'Технический специалист',
       sigTech:req.sigMain||null, sigClient:null, clientName:'', clientTitle:'',
       sessionId:sessionId
-    });
+    };
+    histData.push(entry);
+    // Save to Supabase for QR public page
+    sb.from('pc_inspections').insert({
+      trap_id:t.id, company:t.company, type:t.type, location:t.location||'Периметр',
+      date:date, status:state.status, comment:state.comment||'',
+      pest_co:co, tech_name:tech, session_id:sessionId,
+      user_email:''
+    }).then(function(){});
   });
   saveHist();
   _roundState={};
@@ -1968,12 +1896,15 @@ function printAllQR(){
 }
 
 // ── SETTINGS ─────────────────────────────────────────────────────────
-async function saveProfile(){
+function saveProfile(){
   var n=document.getElementById('set-name').value;
   var co=document.getElementById('set-co').value;
   var ci=document.getElementById('set-city').value;
-  await sb.auth.updateUser({data:{name:n,company:co,city:ci}});
   if(CP){CP.name=n;CP.company=co;CP.city=ci;}
+  // Save to req storage
+  var req=getReq();
+  req.director=n; req.name=req.name||co;
+  saveReqData(req);
   document.getElementById('u-name').textContent=n;
   document.getElementById('sb-co').textContent=co;
   alert('✅ Сохранено!');
@@ -2023,14 +1954,8 @@ function saveReq(){
   alert('✅ Реквизиты сохранены!');
 }
 
-async function changePass(){
-  var np=document.getElementById('np').value;
-  var cp2=document.getElementById('cp2').value;
-  if(np!==cp2){alert('Пароли не совпадают');return;}
-  if(np.length<6){alert('Минимум 6 символов');return;}
-  var r=await sb.auth.updateUser({password:np});
-  if(r.error){alert(r.error.message);return;}
-  alert('✅ Пароль изменён!');
+function changePass(){
+  alert('Смена пароля недоступна — приложение работает без учётных записей.');
 }
 
 // ── toggleLampSubtype (stub — subtype handled via select value) ──
@@ -2070,8 +1995,7 @@ function getSig(id){
 // QR содержит прямую ссылку. Любой сканер откроет браузер,
 // приложение загрузится и сразу покажет историю этой точки.
 function qrTextFor(id, company) {
-  var base = 'https://rnwkim-sys.github.io/pest-control-app/';
-  return base + '?trap=' + encodeURIComponent(id) + '&co=' + encodeURIComponent(company);
+  return 'https://rnwkim-sys.github.io/pest-control-app/trap.html?trap=' + encodeURIComponent(id) + '&co=' + encodeURIComponent(company);
 }
 
 // При открытии по QR-ссылке — автоматически показать историю
@@ -2735,6 +2659,8 @@ function emailAnalyticsReport() {
 
 // ═══════════════════════════════════════════════════════════════
 
+// Start app without login
+showApp();
 </script>
 
 <!-- ═══ MOBILE BOTTOM NAV ═══ -->

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pest Control — Точка мониторинга</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#0f1410;color:#e8f0e9;min-height:100vh;padding:16px}
+.wrap{max-width:480px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding-top:8px}
+.logo-ico{width:36px;height:36px;background:rgba(74,182,96,0.15);border:1px solid rgba(74,182,96,0.3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.logo-name{font-size:16px;font-weight:700}
+.logo-sub{font-size:11px;color:#5a7060}
+.card{background:#161d17;border:1px solid rgba(74,182,96,0.15);border-radius:14px;padding:20px;margin-bottom:14px}
+.trap-id{font-size:28px;font-weight:800;color:#4ab660;margin-bottom:4px}
+.trap-type{font-size:14px;color:#8fa894;margin-bottom:2px}
+.trap-loc{font-size:13px;color:#5a7060}
+.status-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(74,182,96,0.1)}
+.status-row:last-child{border-bottom:none}
+.status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot-g{background:#4ab660}.dot-r{background:#e05252}.dot-a{background:#e08c3a}.dot-x{background:#5a7060}
+.status-date{font-size:11px;color:#5a7060;margin-bottom:2px}
+.status-val{font-size:14px;font-weight:600}
+.status-comment{font-size:12px;color:#e08c3a;margin-top:3px}
+.status-tech{font-size:11px;color:#5a7060;margin-top:2px}
+.section-title{font-size:11px;font-weight:700;color:#5a7060;text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.badge-g{background:rgba(74,182,96,0.12);color:#4ab660;border:1px solid rgba(74,182,96,0.3)}
+.badge-r{background:rgba(224,82,82,0.1);color:#e05252;border:1px solid rgba(224,82,82,0.3)}
+.badge-a{background:rgba(224,140,58,0.1);color:#e08c3a;border:1px solid rgba(224,140,58,0.3)}
+.badge-x{background:#1c2620;color:#5a7060;border:1px solid rgba(74,182,96,0.1)}
+.loader{text-align:center;padding:60px 20px;color:#5a7060}
+.spinner{width:32px;height:32px;border:3px solid rgba(74,182,96,0.2);border-top-color:#4ab660;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{background:rgba(224,82,82,0.1);border:1px solid rgba(224,82,82,0.3);border-radius:12px;padding:20px;text-align:center;color:#e05252}
+.err-ico{font-size:36px;margin-bottom:10px}
+.history-item{padding:10px 0;border-bottom:1px solid rgba(74,182,96,0.08)}
+.history-item:last-child{border-bottom:none}
+.btn{display:block;width:100%;padding:13px;background:#4ab660;color:#0a0f0b;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;margin-top:14px}
+.footer{text-align:center;font-size:11px;color:#3a4e3d;margin-top:20px;padding-bottom:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-ico">🪲</div>
+    <div><div class="logo-name">Pest Control</div><div class="logo-sub">Мониторинг вредителей</div></div>
+  </div>
+
+  <div id="content">
+    <div class="loader">
+      <div class="spinner"></div>
+      Загрузка данных точки...
+    </div>
+  </div>
+
+  <div class="footer">Pest Control Monitoring · HACCP</div>
+</div>
+
+<script>
+const SURL = 'https://iuyhldaffxqsxuhqizsl.supabase.co';
+const SKEY = 'sb_publishable_3Fup75n8Y_938rXg44GnMw_EJnrlb-a';
+const sb = supabase.createClient(SURL, SKEY);
+
+const TYPE_INFO = {
+  'НР': {label:'Ловушка для грызунов (наружная)', icon:'📦'},
+  'ВН': {label:'Ловушка для грызунов (внутренняя)', icon:'🟨'},
+  'АВ': {label:'Амбарная ловушка', icon:'🪤'},
+  'ИЛ-УФ': {label:'Инсект. лампа УФ', icon:'💡'},
+  'ИЛ-КЛ': {label:'Инсект. лампа с клеем', icon:'💡'},
+  'ДЗ': {label:'Дезинсекция', icon:'🦟'},
+  'ПТ': {label:'Защита от птиц', icon:'🦅'}
+};
+
+function isIssue(s){ return s && !s.startsWith('✅'); }
+function dotClass(s){
+  if(!s) return 'dot-x';
+  if(s.startsWith('✅')) return 'dot-g';
+  if(s.includes('⚠️')||s.startsWith('🐀')) return 'dot-r';
+  return 'dot-a';
+}
+function badgeClass(s){
+  if(!s) return 'badge-x';
+  if(s.startsWith('✅')) return 'badge-g';
+  if(s.includes('⚠️')||s.startsWith('🐀')) return 'badge-r';
+  return 'badge-a';
+}
+
+async function loadTrap() {
+  const params = new URLSearchParams(window.location.search);
+  const trapId = params.get('trap') ? decodeURIComponent(params.get('trap')) : null;
+  const co     = params.get('co')   ? decodeURIComponent(params.get('co'))   : null;
+  const el     = document.getElementById('content');
+
+  if (!trapId) {
+    el.innerHTML = '<div class="err"><div class="err-ico">❓</div><div>QR-код не содержит данных о ловушке</div></div>';
+    return;
+  }
+
+  // Load from Supabase
+  let trap = null, history = [];
+  try {
+    let tq = sb.from('pc_traps').select('*').eq('trap_id', trapId);
+    if (co) tq = tq.eq('company', co);
+    const { data: tdata } = await tq.limit(1).single();
+    trap = tdata;
+  } catch(e) {}
+
+  try {
+    let hq = sb.from('pc_inspections').select('*').eq('trap_id', trapId).order('date', {ascending: false}).limit(20);
+    if (co) hq = hq.eq('company', co);
+    const { data: hdata } = await hq;
+    history = hdata || [];
+  } catch(e) {}
+
+  // Fallback: if Supabase tables don't exist, show what we know from URL
+  const ti = trap ? (TYPE_INFO[trap.type] || {label: trap.type, icon: '📍'}) : {label: 'Точка мониторинга', icon: '📍'};
+  const last = history[0];
+
+  let html = '<div class="card" style="border-color:rgba(74,182,96,.4)">';
+  html += '<div class="trap-id">' + (trap ? trap.trap_id : trapId) + '</div>';
+  html += '<div class="trap-type">' + ti.icon + ' ' + ti.label + '</div>';
+  if (trap) html += '<div class="trap-loc">' + trap.company + ' · ' + (trap.location || 'Периметр') + '</div>';
+  else if (co) html += '<div class="trap-loc">' + co + '</div>';
+  html += '</div>';
+
+  // Last status
+  html += '<div class="card">';
+  html += '<div class="section-title">Последний осмотр</div>';
+  if (!last) {
+    html += '<div style="color:#5a7060;font-size:14px">Ещё не осматривалась</div>';
+  } else {
+    html += '<div style="font-size:12px;color:#5a7060;margin-bottom:6px">' + last.date + ' · ' + (last.tech_name || '—') + '</div>';
+    html += '<span class="badge ' + badgeClass(last.status) + '">' + last.status + '</span>';
+    if (last.comment) html += '<div style="font-size:13px;color:#e08c3a;margin-top:8px">📌 ' + last.comment + '</div>';
+    if (last.pest_co) html += '<div style="font-size:11px;color:#5a7060;margin-top:6px">' + last.pest_co + '</div>';
+  }
+  html += '</div>';
+
+  // History
+  if (history.length > 1) {
+    html += '<div class="card">';
+    html += '<div class="section-title">История осмотров (' + history.length + ')</div>';
+    html += history.map(function(h) {
+      return '<div class="history-item">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+          '<div class="status-dot ' + dotClass(h.status) + '"></div>' +
+          '<span style="font-size:12px;color:#5a7060">' + h.date + '</span>' +
+          '<span style="font-size:11px;color:#3a4e3d">' + (h.tech_name||'') + '</span>' +
+        '</div>' +
+        '<div style="font-size:13px;font-weight:600">' + h.status + '</div>' +
+        (h.comment ? '<div style="font-size:12px;color:#e08c3a;margin-top:2px">📌 ' + h.comment + '</div>' : '') +
+      '</div>';
+    }).join('');
+    html += '</div>';
+  }
+
+  html += '<a href="https://rnwkim-sys.github.io/pest-control-app/" class="btn">Открыть приложение</a>';
+  el.innerHTML = html;
+}
+
+loadTrap();
+</script>
+</body>
+</html>
